@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<br>
+<div class="text-center"><h1>客服知识库维护系统Ver1.0</h1>
+</div>
+{% endblock %}
+
+{% block js %}
+{% if active_url %}
+$('#{{ active_url }}').addClass('active');
+{% else %}
+$('#index-url').addClass('active');
+{% endif %}
+{% endblock %}

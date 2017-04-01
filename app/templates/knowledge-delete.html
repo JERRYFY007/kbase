@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block body %}
+{% if knowledges %}
+
+{% for knowledge in knowledges %}
+<nav aria-label="...">
+  <ul class="pager">
+    <li class="previous"><a href="/knowledge/delete/{{ knowledge.id-1 }}"><span aria-hidden="true">&larr;</span> 上一个</a></li>
+	<li class="search"><a href="/knowledge/search/"><span class="glyphicon " ></span>search</a></li>
+	<li class="edit"><a href="/knowledge/edit/{{ knowledge.id }}"><span class="glyphicon glyphicon-edit" ></span>编辑</a></li>
+	<li class="add"><a href="/knowledge/add/"><span class="glyphicon " ></span>ADD</a></li>
+	<li class="delete"><a href="/knowledge/delete/{{ knowledge.id }}"><span class="glyphicon glyphicon-remove" ></span>删除</a></li>
+	<li class=" "> </li>
+	<li class="update"><a href="/knowledge/update/{{ knowledge.id }}"><span class="glyphicon " ></span>Update</a></li>
+	<li class="view"><a href="/knowledge/view/{{ knowledge.id }}"><span class="glyphicon " ></span>View</a></li>
+    <li class="next"><a href="/knowledge/delete/{{ knowledge.id+1 }}">下一个 <span aria-hidden="true">&rarr;</span></a></li>
+  </ul>
+</nav>
+
+<div class="col-md-offset-2 col-md-6">
+	<dl class="dl-horizontal">
+		<dt> ID:</dt>
+		<dd> {{ knowledge.id }} </dd>
+		<br>
+		<dt> Question: </dt>
+		<dd> {{ knowledge.question }} </dd>
+		<br>
+		<dt> Answer: </dt>
+		<dd> {{ knowledge.answer }} </dd>
+	</dl>
+</div>
+
+{% endfor %}
+
+{% endif %}
+{% endblock %}
+
+{% block js %}
+{% if active_url %}
+$('#{{ active_url }}').addClass('active');
+{% else %}
+$('#index-url').addClass('active');
+{% endif %}
+{% endblock %}

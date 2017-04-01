@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block body %}
+<br>
+<form class="form-horizontal" action="{{ url_for('search') }}" method="post">
+    <div class="form-group">
+        <label for="keyword" class="col-md-offset-1 col-md-1 control-label">问题或问题关键字:</label>
+        <div class="col-md-5">
+            <input type="text" class="form-control" name="keyword" placeholder="keyword">
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-info">搜索</button>
+        </div>
+    </div>
+</form>
+
+{% if keywords %}
+{{ pagination.info }}
+{{ pagination.links }}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>QA_ID</th>
+            <th>EX_ID</th>
+            <th>关键词</th>
+            <th>权重</th>
+            <th>同义词</th>
+            <th>编辑</th>
+            <th>删除</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for keyword in keywords %}
+        <tr>
+            <td>{{ loop.index + (page - 1) * per_page }}</td>
+            <td>{{ keyword.qa_id }}</td>
+            <td>{{ keyword.ex_id }}</td>
+            <td>{{ keyword.keyword }}</td>
+            <td>{{ keyword.importance }}</td>
+            <td>{{ keyword.synonym }}</td>
+            <td>
+                <button type="button">Edit</button>
+            </td>
+            <td>
+                <button type="button">Delete</button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{{ pagination.links }}
+{% endif %}
+{% endblock %}
+
+{% block js %}
+{% if active_url %}
+$('#{{ active_url }}').addClass('active');
+{% else %}
+$('#search-url').addClass('active');
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block body %}
+{% if keywords %}
+<div class="table-responsive col-md-offset-1 col-md-10">
+    <br>
+    {{ pagination.links }}
+    <table class="table table-hover table-striped table-condensed">
+        <thead>
+        <tr>
+            <th width="5%">#</th>
+            <th width="5%">QA_ID</th>
+            <th width="5%">EX_ID</th>
+            <th width="15%">关键词</th>
+            <th width="6%">关键词权重</th>
+            <th width="14%">调整权重</th>
+            <th width="15%">同义词</th>
+            <th width="8%">删除同义词</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for keyword in keywords %}
+        <tr>
+            <td>{{ loop.index + (page - 1) * per_page }}</td>
+            <td>
+                {% if keyword.qa_id %}
+					{{ keyword.qa_id }}
+				{% else %}
+                {% endif %}
+            </td>
+            <td>
+                {% if keyword.ex_id %}
+					{{ keyword.ex_id }}
+				{% else %}
+                {% endif %}
+			</td>
+            <td>{{ keyword.keyword }}</td>
+            <td>{{ keyword.importance }}</td>
+            <td>
+                <form action=" #" method="get">
+                    <input type="number" name="points" min="0" max="2" step="0.2" value={{ keyword.importance }} />
+                    <input type="submit" value='确定'/>
+                </form>
+            </td>
+            <td>
+                {% if keyword.synonym %}
+                {{ keyword.synonym }}
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger">
+					<span class="glyphicon glyphicon-remove"></span>Delete</button>
+                {% else %}
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger" disabled="disabled">
+					<span class="glyphicon glyphicon-remove"></span>Delete</button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{{ pagination.links }}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block js %}
+{% if active_url %}
+$('#{{ active_url }}').addClass('active');
+{% else %}
+$('#keywords-url').addClass('active');
+{% endif %}
+{% endblock %}

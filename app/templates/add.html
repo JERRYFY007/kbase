@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block body %}
+<br>
+<form class="form-horizontal" action="{{ url_for('add') }}" method="post">
+    <div class="form-group">
+        <label for="question" class="col-md-2 control-label">标准问题:</label>
+        <div class="col-md-5">
+            <input type="text" class="form-control" name="question" placeholder="question">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="answer" class="col-md-2 control-label">标准答案:</label>
+        <div class="col-md-5">
+            <textarea class="form-control" name="answer" placeholder="answer" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-1">
+            <button type="submit" class="btn btn-info">增加</button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block js %}
+{% if active_url %}
+$('#{{ active_url }}').addClass('active');
+{% else %}
+$('#add-url').addClass('active');
+{% endif %}
+{% endblock %}
+

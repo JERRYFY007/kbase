@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block body %}
+<form action="{{ url_for('add') }}" method="post" class="add">
+    <dl>
+        <dt>标准问题:
+        <dd><input type="text" size="50" name="question">
+        <dt>标准答案:
+        <dd><textarea name="answer" rows="5" cols="50"></textarea>
+        <dd><input type="submit" value="输入">
+    </dl>
+</form>
+{% endblock %}
+
+{% block js %}
+{% if active_url %}
+$('#{{ active_url }}').addClass('active');
+{% else %}
+$('#users-url').addClass('active');
+{% endif %}
+{% endblock %}
+

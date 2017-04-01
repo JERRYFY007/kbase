@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block body %}
+{% if expands %}
+{{ pagination.info }}
+{{ pagination.links }}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>关键词</th>
+            <th>权重</th>
+            <th>同义词</th>
+            <th>编辑</th>
+            <th>删除</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for expand in expands %}
+        <tr>
+            <td>{{ loop.index + (page - 1) * per_page }}</td>
+            <td>{{ expand.expand }}</td>
+            <td>{{ expand.importance }}
+            <td>{{ expand.synonym }}
+            <td>
+                <button type="button">Edit</button>
+            </td>
+            <td>
+                <button type="button">Delete</button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{{ pagination.links }}
+{% endif %}
+{% endblock %}
+
+{% block js %}
+{% if active_url %}
+$('#{{ active_url }}').addClass('active');
+{% else %}
+$('#users-url').addClass('active');
+{% endif %}
+{% endblock %}
