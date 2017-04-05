@@ -20,25 +20,24 @@
         <tbody>
         {% for extend in extends %}
         <tr>
-            <td width="8%">{{ loop.index + (page - 1) * per_page }}</td>
+            <td width="8%"><a href="/extend/list/{{ extend.id }}" method=get>{{ loop.index + (page - 1) * per_page }}</td>
             <td width="8%">
                 {% if extend.qa_id %}
 					{{ extend.qa_id }}
 				{% else %}
                 {% endif %}
 			</td>
-            <td width="8%">
-			{{ extend.ex_id }}</td>
-            <td width="15%">{{ extend.item }}</td>
+            <td width="8%">{{ extend.ex_id }}</td>
+            <td width="15%"><a href="/extend/list/{{ extend.id }}" method=get>{{ extend.item }}</td>
             <td width="8%">{{ extend.omit }}</td>
             <td width="15%">
                 {% if extend.synonym %}
                 {{ extend.synonym }}
             </td>
             <td>
-                <button type="button" class="btn btn-danger">
-					<span class="glyphicon glyphicon-remove"></span>Delete</button>
-                {% else %}
+                 <a href="/extend/list/{{ extend.id }}" class="btn btn-danger" method=get>
+				<span class="glyphicon glyphicon-remove"></span>删除</a>
+               {% else %}
             </td>
             <td>
                 <button type="button" class="btn btn-danger" disabled="disabled">

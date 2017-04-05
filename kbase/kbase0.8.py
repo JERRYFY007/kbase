@@ -1,22 +1,23 @@
 # -*- coding:utf-8 -*-
 # @author:Eric Luo
-# @file:kbase0.2.py
-# @time:2017/3/14 0014 15:36
-
-from __future__ import unicode_literals
+# @file:view.py
+# @time:2017/3/29
 
 import sqlite3
-
 import click
-import jieba
-from flask import Flask, render_template, g, current_app, request
+from __future__ import unicode_literals
+from flask import Flask, render_template, g, current_app, request, redirect, url_for
 from flask_paginate import Pagination, get_page_args
 
 click.disable_unicode_literals_warning = True
-
 app = Flask(__name__)
-app.config.from_pyfile('app.cfg')
-db_filename = '../knowledge.db'
+#app.config.from_pyfile('app.cfg')
+PER_PAGE = 50
+CSS_FRAMEWORK = 'bootstrap3'
+LINK_SIZE = 'sm'
+# decide whether or not a single page returns pagination
+SHOW_SINGLE_PAGE = False
+db_filename = 'knowledge.db'
 
 
 @app.before_request
@@ -24,6 +25,13 @@ def before_request():
     g.conn = sqlite3.connect(db_filename)
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
+
+
+def query_db(query, args=(), one=False):
+    cur = g.execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv
 
 
 @app.teardown_request
@@ -45,7 +53,7 @@ def knowledges(page):
     g.cur.execute('select count(*) from knowledge_from_xml where question not like ""')
     total = g.cur.fetchone()[0]
     page, per_page, offset = get_page_args()
-    sql = 'select question,answer from knowledge_from_xml where question not like "" order by id limit {}, {}' \
+    sql = 'select id,question,answer from knowledge_from_xml where question not like "" order by id limit {}, {}' \
         .format(offset, per_page)
     g.cur.execute(sql)
     knowledges = g.cur.fetchall()
@@ -61,6 +69,124 @@ def knowledges(page):
                            pagination=pagination,
                            active_url='knowledges-page-url',
                            )
+
+
+@app.route('/knowledge/view', defaults={'id': 1}, methods=['GET'])
+@app.route('/knowledge/view/', defaults={'id': 1}, methods=['GET'])
+@app.route('/knowledge/view/<int:id>/')
+@app.route('/knowledge/view/<int:id>')
+def knowledge_view(id):
+    if request.method == 'GET' and id :
+        sql = 'select * from knowledge_from_xml where id = {}'.format(id)
+        g.cur.execute(sql)
+        knowledges = g.cur.fetchall()
+        return render_template('knowledge-view.html', knowledges = knowledges, )
+
+
+@app.route('/knowledge/edit', defaults={'id': 1})
+@app.route('/knowledge/edit/', defaults={'id': 1})
+@app.route('/knowledge/edit/<int:id>/')
+@app.route('/knowledge/edit/<int:id>')
+def knowledge_edit(id):
+    if request.method == 'GET' and id :
+        sql = 'select * from knowledge_from_xml where id = {}'.format(id)
+        g.cur.execute(sql)
+        knowledges = g.cur.fetchall()
+    return render_template('knowledge-edit.html', knowledges = knowledges,)
+
+
+@app.route('/knowledge/delete', defaults={'id': 1})
+@app.route('/knowledge/delete/', defaults={'id': 1})
+@app.route('/knowledge/delete/<int:id>/')
+@app.route('/knowledge/delete/<int:id>')
+def knowledge_delete(id):
+    if request.method == 'GET' and id :
+        sql = 'select * from knowledge_from_xml where id = {}'.format(id)
+        g.cur.execute(sql)
+        knowledges = g.cur.fetchall()
+    return render_template('knowledge-delete.html', knowledges = knowledges,)
+
+
+@app.route('/knowledge/add')
+@app.route('/knowledge/add/')
+def knowledge_add():
+    if request.method == 'GET':
+        return render_template('knowledge-add.html')
+    return render_template('knowledge-add.html')
+
+
+@app.route('/knowledge/search', defaults={'search':''})
+@app.route('/knowledge/search/', defaults={'search':''})
+@app.route('/knowledge/search/<search>/')
+@app.route('/knowledge/search/<search>')
+def knowledge_search(search):
+    if request.method == 'GET' and search :
+        sql = 'select * from knowledge_from_xml where id = {}'.format(search)
+        g.cur.execute(sql)
+        knowledges = g.cur.fetchall()
+        return render_template('knowledge-search.html', knowledges=knowledges, )
+    else:
+        return render_template('knowledge-search.html')
+
+
+@app.route('/keyword/list/<int:id>/')
+@app.route('/keyword/list/<int:id>')
+@app.route('/keyword/view/<int:id>/')
+@app.route('/keyword/view/<int:id>')
+@app.route('/keyword/edit/<int:id>/')
+@app.route('/keyword/edit/<int:id>')
+@app.route('/keyword/delete/<int:id>/')
+@app.route('/keyword/delete/<int:id>')
+@app.route('/keyword/update/<int:id>/')
+@app.route('/keyword/update/<int:id>')
+def keyword_list(id):
+    if request.method == 'GET' and id :
+        sql = 'select * from keyword_from_xml where id = {}'.format(id)
+        g.cur.execute(sql)
+        keywords = g.cur.fetchall()
+    return render_template('keyword-list.html', keywords = keywords,)
+
+
+@app.route('/keyword/add/', methods=['GET', 'POST'])
+@app.route('/keyword/add', methods=['GET', 'POST'])
+def keyword_add():
+    if request.method == 'POST' :
+        print(request.form.get('keyword'))
+        sql = 'select * from keyword_from_xml where keyword like ?'
+        args = ('%{}%'.format(request.form.get('keyword')),)
+        g.cur.execute(sql, args)
+        keywords = g.cur.fetchall()
+        return render_template('keyword-search.html',keywords = keywords)
+    return render_template('keyword-search.html')
+
+
+@app.route('/extend/list/<int:id>/')
+@app.route('/extend/list/<int:id>')
+@app.route('/extend/view/<int:id>/')
+@app.route('/extend/view/<int:id>')
+@app.route('/extend/edit/<int:id>/')
+@app.route('/extend/edit/<int:id>')
+@app.route('/extend/delete/<int:id>/')
+@app.route('/extend/delete/<int:id>')
+@app.route('/extend/update/<int:id>/')
+@app.route('/extend/update/<int:id>')
+def extend_list(id):
+    if request.method == 'GET' and id :
+        sql = 'select * from extend_from_xml where id = {}'.format(id)
+        g.cur.execute(sql)
+        extends = g.cur.fetchall()
+    return render_template('extend-list.html', extends = extends,)
+
+
+@app.route('/extend/add/', methods=['GET', 'POST'])
+@app.route('/extend/add', methods=['GET', 'POST'])
+@app.route('/extend/search/', methods=['GET', 'POST'])
+@app.route('/extend/search', methods=['GET', 'POST'])
+def extend_add():
+    if request.method == 'GET' :
+        return render_template('extend-add.html')
+    return render_template('extend-add.html')
+
 
 
 @app.route('/keywords/', defaults={'page': 1})
@@ -204,22 +330,29 @@ def dialog():
     return render_template('dialog.html')
 
 
+import jieba
+import jieba.analyse
 @app.route('/segment', methods=['GET', 'POST'])
 @app.route('/segment/', methods=['GET', 'POST'])
 def segment():
     if request.method == 'POST':
         segment = request.form.get('sentence')
         print(segment)
+        cut0 = jieba.cut_for_search(segment)  # 搜索引擎模式
         cut1 = jieba.cut(segment, cut_all=True)  # 全模式
         cut2 = jieba.cut(segment, cut_all=False)  # 默认模式
         cut3 = jieba.cut(segment)  #
-        cut0 = jieba.cut_for_search(segment)  # 搜索引擎模式
         segmented = []
         segmented.append('/'.join(cut0))
         segmented.append('/'.join(cut1))
         segmented.append('/'.join(cut2))
         segmented.append('/'.join(cut3))
-        return render_template('segment.html', segmented=segmented)
+        analyse = []
+        for x, w in jieba.analyse.extract_tags(segment, withWeight=True):
+            analyse.append('%s %s' % (x, w))
+        for x, w in jieba.analyse.textrank(segment, withWeight=True):
+            analyse.append('%s %s' % (x, w))
+        return render_template('segment.html', sentence=segment, segmented=segmented, analyse=analyse)
     return render_template('segment.html')
 
 
@@ -247,7 +380,7 @@ def get_pagination(**kwargs):
 @click.command()
 @click.option('--port', '-p', default=5000, help='listening port')
 def run(port):
-    app.run(debug=True, port=port)
+    app.run(debug=True, port=port, host='0.0.0.0')
 
 
 if __name__ == '__main__':

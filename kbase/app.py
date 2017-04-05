@@ -1,21 +1,19 @@
 # -*- coding:utf-8 -*-
 # @author:Eric Luo
-# @file:app.py
-# @time:2017/3/29
+# @file:kbase0.2.py
+# @time:2017/3/14 0014 15:36
 
 from __future__ import unicode_literals
-
-import sqlite3
-
-import click
-from flask import Flask, render_template, g, current_app, request, redirect, url_for
+from flask import Flask, render_template, g, current_app, request
 from flask_paginate import Pagination, get_page_args
+from Segmentation import Segmentation
+import sqlite3
+import click
 
 click.disable_unicode_literals_warning = True
-
 app = Flask(__name__)
 app.config.from_pyfile('app.cfg')
-db_filename = '../kbase/knowledge.db'
+db_filename = 'knowledge.db'
 
 
 @app.before_request
@@ -23,13 +21,6 @@ def before_request():
     g.conn = sqlite3.connect(db_filename)
     g.conn.row_factory = sqlite3.Row
     g.cur = g.conn.cursor()
-
-
-def query_db(query, args=(), one=False):
-    cur = g.execute(query, args)
-    rv = cur.fetchall()
-    cur.close()
-    return (rv[0] if rv else None) if one else rv
 
 
 @app.teardown_request
@@ -51,7 +42,7 @@ def knowledges(page):
     g.cur.execute('select count(*) from knowledge_from_xml where question not like ""')
     total = g.cur.fetchone()[0]
     page, per_page, offset = get_page_args()
-    sql = 'select id,question,answer from knowledge_from_xml where question not like "" order by id limit {}, {}' \
+    sql = 'select question,answer from knowledge_from_xml where question not like "" order by id limit {}, {}' \
         .format(offset, per_page)
     g.cur.execute(sql)
     knowledges = g.cur.fetchall()
@@ -67,40 +58,6 @@ def knowledges(page):
                            pagination=pagination,
                            active_url='knowledges-page-url',
                            )
-
-
-@app.route('/knowledge/view', defaults={'id': 1}, methods=['GET'])
-@app.route('/knowledge/view/', defaults={'id': 1}, methods=['GET'])
-@app.route('/knowledge/view/<int:id>/')
-@app.route('/knowledge/view/<int:id>')
-def knowledge_view(id):
-    if request.method == 'GET' and id :
-        sql = 'select * from knowledge_from_xml where id = {}'.format(id)
-        g.cur.execute(sql)
-        knowledges = g.cur.fetchall()
-        return render_template('knowledge-view.html', knowledges = knowledges, )
-
-@app.route('/knowledge/edit', defaults={'id': 1})
-@app.route('/knowledge/edit/', defaults={'id': 1})
-@app.route('/knowledge/edit/<int:id>/')
-@app.route('/knowledge/edit/<int:id>')
-def knowledge_edit(id):
-    if request.method == 'GET' and id :
-        sql = 'select * from knowledge_from_xml where id = {}'.format(id)
-        g.cur.execute(sql)
-        knowledges = g.cur.fetchall()
-    return render_template('knowledge-edit.html', knowledges = knowledges,)
-
-@app.route('/knowledge/delete', defaults={'id': 1})
-@app.route('/knowledge/delete/', defaults={'id': 1})
-@app.route('/knowledge/delete/<int:id>/')
-@app.route('/knowledge/delete/<int:id>')
-def knowledge_delete(id):
-    if request.method == 'GET' and id :
-        sql = 'select * from knowledge_from_xml where id = {}'.format(id)
-        g.cur.execute(sql)
-        knowledges = g.cur.fetchall()
-    return render_template('knowledge-delete.html', knowledges = knowledges,)
 
 
 @app.route('/keywords/', defaults={'page': 1})
@@ -244,29 +201,33 @@ def dialog():
     return render_template('dialog.html')
 
 
-import jieba
-import jieba.analyse
 @app.route('/segment', methods=['GET', 'POST'])
 @app.route('/segment/', methods=['GET', 'POST'])
 def segment():
     if request.method == 'POST':
         segment = request.form.get('sentence')
         print(segment)
-        cut0 = jieba.cut_for_search(segment)  # 搜索引擎模式
-        cut1 = jieba.cut(segment, cut_all=True)  # 全模式
-        cut2 = jieba.cut(segment, cut_all=False)  # 默认模式
-        cut3 = jieba.cut(segment)  #
+        seg = Segmentation()
+        seg.set_sentence(segment)
+        seg.mm_seg()  # MM
+        seg.rmm_seg()  # RMM
+        seg.max_probability_seg()  # 最大概率分词
+        r = seg.get_result_dict()  # 获得分词结果字典
+        # print '|'.join(r['MM'])
+        # print '|'.join(r['RMM'])
+        # print '|'.join(r['MP'])
+        #seg.print_result()  # 将分词结果输出
         segmented = []
-        segmented.append('/'.join(cut0))
-        segmented.append('/'.join(cut1))
-        segmented.append('/'.join(cut2))
-        segmented.append('/'.join(cut3))
-        analyse = []
-        for x, w in jieba.analyse.extract_tags(segment, withWeight=True):
-            analyse.append('%s %s' % (x, w))
-        for x, w in jieba.analyse.textrank(segment, withWeight=True):
-            analyse.append('%s %s' % (x, w))
-        return render_template('segment.html', sentence=segment, segmented=segmented, analyse=analyse)
+        segmented.append('MM:')
+        segmented.append('/'.join(r['MM']))
+        segmented.append('\n')
+        segmented.append('RMM:')
+        segmented.append('/'.join(r['RMM']))
+        segmented.append('\n')
+        segmented.append('MP:')
+        segmented.append('/'.join(r['MP']))
+        segmented.append('\n')
+        return render_template('segment.html', segmented=segmented)
     return render_template('segment.html')
 
 

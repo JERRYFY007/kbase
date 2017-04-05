@@ -21,7 +21,7 @@
         <tbody>
         {% for keyword in keywords %}
         <tr>
-            <td>{{ loop.index + (page - 1) * per_page }}</td>
+            <td><a href="/keyword/list/{{ keyword.id }}" method=get>{{ loop.index + (page - 1) * per_page }}</td>
             <td>
                 {% if keyword.qa_id %}
 					{{ keyword.qa_id }}
@@ -34,7 +34,7 @@
 				{% else %}
                 {% endif %}
 			</td>
-            <td>{{ keyword.keyword }}</td>
+            <td><a href="/keyword/list/{{ keyword.id }}" method=get>{{ keyword.keyword }}</td>
             <td>{{ keyword.importance }}</td>
             <td>
                 <form action=" #" method="get">
@@ -47,8 +47,8 @@
                 {{ keyword.synonym }}
             </td>
             <td>
-                <button type="button" class="btn btn-danger">
-					<span class="glyphicon glyphicon-remove"></span>Delete</button>
+                <a href="/keyword/delete/{{ keyword.id }}" class="btn btn-danger" method=get>
+				<span class="glyphicon glyphicon-remove"></span>删除</a>
                 {% else %}
             </td>
             <td>

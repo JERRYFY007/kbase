@@ -18,9 +18,9 @@
         {% for knowledge in knowledges %}
         <tr>
 			
-            <td>{{ loop.index + (page - 1) * per_page }}</td>
+            <td><a href="/knowledge/view/{{ knowledge.id }}" method=get>{{ loop.index + (page - 1) * per_page }}</td>
             <td><a href="/knowledge/view/{{ knowledge.id }}" method=get>{{ knowledge.question }}</a></td>
-            <td>{{ knowledge.answer }}
+            <td><a href="/knowledge/view/{{ knowledge.id }}" method=get>{{ knowledge.answer }}
             <td>
 				<div class="btn-group" role="group" aria-label="...">
 				<a href="/knowledge/view/{{ knowledge.id }}"  class="btn btn-info" method=get>查看</a>

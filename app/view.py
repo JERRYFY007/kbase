@@ -9,6 +9,7 @@ import sqlite3
 import click
 from app import app, knowledge, segment
 
+
 click.disable_unicode_literals_warning = True
 
 app.config.from_pyfile('app.cfg')
