@@ -24,12 +24,15 @@
 			<dd> {{ segmented1 }} </dd>
 		{% endfor %}
 		<br>
+{% endif %}
+{% if analyse %}
 		<dt> 分 析:</dt>
         {% for analyse1 in analyse %}
 			<dd> {{ analyse1 }} </dd>
 		{% endfor %}
-	</dl>
 {% endif %}
+	</dl>
+
 
 {% endblock %}
 

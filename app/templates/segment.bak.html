@@ -3,25 +3,34 @@
 <br>
 <form class="form-horizontal" action="{{ url_for('segment') }}" method="post" class="segment">
     <div class="form-group">
-        <label for="sentence" class="col-sm-2 control-label">输入语句:</label>
-        <div class="col-sm-5">
+        <label for="sentence" class="col-md-2 control-label">输入语句:</label>
+        <div class="col-md-5">
             <input type="text" class="form-control" id="sentence" placeholder="sentence" name="sentence">
         </div>
-        <div class="col-sm-1">
-            <button type="submit" class="btn btn-default">输入</button>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-info">分词</button>
         </div>
     </div>
-
-    {% if segmented %}
-    <br>
-    <div class="form-group">
-        <label for="segmented" class="col-sm-1 control-label"> 分 词 :</label>
-        <div class="col-sm-5">
-            {{ segmented }}
-        </div>
-    </div>
-    {% endif %}
 </form>
+<br>
+
+{% if segmented %}
+	<dl class="dl-horizontal col-md-5 col-md-offset-1">
+		<dt> 语 句:</dt>
+		<dd> {{ sentence }} </dd>
+		<br>
+		<dt> 分 词:</dt>
+        {% for segmented1 in segmented %}
+			<dd> {{ segmented1 }} </dd>
+		{% endfor %}
+		<br>
+		<dt> 分 析:</dt>
+        {% for analyse1 in analyse %}
+			<dd> {{ analyse1 }} </dd>
+		{% endfor %}
+	</dl>
+{% endif %}
+
 {% endblock %}
 
 {% block js %}

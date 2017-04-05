@@ -10,7 +10,7 @@ class Segmentation:
     def __init__(self):
         # 新建列表存放分词词典读出来的词
         d = []
-        with open('sogou.dic_utf8', 'r', encoding='utf-8') as fd:
+        with open('jieba.dict.utf8', 'r', encoding='utf-8') as fd:
             flists = fd.readlines()
             for flist in flists:
                 s = flist.split()
@@ -69,7 +69,9 @@ class Segmentation:
             if max_len > cur:
                 max_len = cur
             for l in range(max_len, 0, -1):
-                if self.sentence[cur - l: cur] in self.word_set:
+                if self.sentence[cur - l: cur] in self.keyword:
+                    break
+                elif self.sentence[cur - l: cur] in self.word_set:
                     break
             seg_result.insert(0, self.sentence[cur - l: cur])
             cur -= l
@@ -81,7 +83,7 @@ class Segmentation:
 def segment():
     if request.method == 'POST':
         segment = request.form.get('sentence')
-        print(segment)
+        # print(segment)
         seg = Segmentation()
         seg.set_sentence(segment)
         seg.mm_seg()  # MM
@@ -92,10 +94,10 @@ def segment():
         # print '|'.join(r['MP'])
         #seg.print_result()  # 将分词结果输出
         segmented = []
-        segmented.append('MM:')
+        segmented.append('FMM: ')
         segmented.append('/'.join(r['MM']))
         segmented.append('\n')
-        segmented.append('RMM:')
+        segmented.append('RMM: ')
         segmented.append('/'.join(r['RMM']))
         segmented.append('\n')
         analyse = []
