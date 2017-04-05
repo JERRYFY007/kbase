@@ -35,6 +35,6 @@ with open('question.txt', 'r', encoding='utf-8') as src:
             wordSeg.append(sentence[startPoint])   # 全部切分为单字词
             startPoint += i
 
-with open('question.Seg', 'w', encoding='utf-8') as des:
+with open('question.seg', 'w', encoding='utf-8') as des:
     for word in wordSeg:
         des.write(word+'  ')

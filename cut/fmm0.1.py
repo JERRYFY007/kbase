@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
+
 # 新建列表存放分词词典读出来的词
 d = []
 with open('keyword.dict', 'r', encoding='utf-8') as fd:
     flists = fd.readlines()
     for flist in flists:
-        print(flist)
+        # print(flist)
         s = flist.split()
-        print(s[0])
+        # print(s[0])
         d.append(s[0])
     # 将列表转换为元祖
     lexicon = tuple(d)
-    print("分词词典：", lexicon)
+    # print("分词词典：", lexicon)
 
 wordSeg = []    # 新建列表存放切分好的词
-maxWordLen = 3  # 最大词长设为3
+maxWordLen = 5  # 最大词长设为5
 with open('question.txt', 'r', encoding='utf-8') as src:
     sentence = src.read()
     sentenceLen = len(sentence)
@@ -27,13 +28,15 @@ with open('question.txt', 'r', encoding='utf-8') as src:
                 # print(string)
                 wordSeg.append(string)
                 matched = True
-                startPoint+=len(string)
+                startPoint += len(string)
                 break
         if not matched:    # 假如在词典中找不到匹配
             i = 1
             wordSeg.append(sentence[startPoint])   # 全部切分为单字词
             startPoint += i
+        print('Sentence: ', sentence)
+        print('Cut: ', wordSeg)
 
-with open('question.key', 'w', encoding='utf-8') as des:
+with open('question.cut', 'w', encoding='utf-8') as des:
     for word in wordSeg:
-        des.write(word+'  ')
+        des.write(word + '  ')
