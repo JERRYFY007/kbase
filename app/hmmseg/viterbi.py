@@ -12,7 +12,7 @@ PrevStatus = {
     'E': ('B', 'M')
 }
 
-from hmmseg import prob_start, prob_trans, prob_emit
+from app.hmmseg import prob_start, prob_trans, prob_emit
 
 start_P, trans_P, emit_P = prob_start.P, prob_trans.P, prob_emit.P
 

@@ -3,15 +3,16 @@
 # @file:view.py
 # @time:2017/3/29
 from __future__ import unicode_literals
+
+import sqlite3
+
+import click
 from flask import render_template, g, current_app, request
 from flask_paginate import Pagination, get_page_args
-import sqlite3
-import click
-from app import app, knowledge, segment
 
+from app import app
 
 click.disable_unicode_literals_warning = True
-
 app.config.from_pyfile('app.cfg')
 db_filename = 'knowledge.db'
 

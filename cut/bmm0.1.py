@@ -2,7 +2,7 @@
 
 # 新建列表存放分词词典读出来的词
 d = []
-with open('sogou.dic_utf8', 'r', encoding='utf-8') as fd:
+with open('../jieba.dict.utf8', 'r', encoding='utf-8') as fd:
     flists = fd.readlines()
     for flist in flists:
         s = flist.split()

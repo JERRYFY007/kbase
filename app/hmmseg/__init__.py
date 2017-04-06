@@ -4,8 +4,9 @@
 	@author: Yigoss.Panyi
 	@date: 2014-6-7
 '''
-from hmmseg.viterbi import gen_seg_viterbi
 import re
+
+from app.hmmseg.viterbi import gen_seg_viterbi
 
 
 def cut(sentence):
@@ -14,7 +15,7 @@ def cut(sentence):
 	Parameters:
 		sentence: The String to be segmented
 	"""
-    unlog_word_cache = open("dict/dict.txt.temp", "w")
+    unlog_word_cache = open("app/dict/dict.txt.temp", "w")
     # sentence
     re_han = re.compile("([\u4E00-\u9FA5a-zA-Z0-9+#&\._]+)", re.U)
     re_skip = re.compile("(\r\n|\s)", re.U)
