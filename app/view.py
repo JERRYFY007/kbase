@@ -9,7 +9,7 @@ import sqlite3
 import click
 from flask import render_template, g, current_app, request
 from flask_paginate import Pagination, get_page_args
-
+from app import knowledge, segment
 from app import app
 
 click.disable_unicode_literals_warning = True
@@ -97,7 +97,7 @@ def keywords(page):
 
 @app.route('/extends/', defaults={'page': 1})
 @app.route('/extends', defaults={'page': 1})
-@app.route('/eextends/page/<int:page>/')
+@app.route('/extends/page/<int:page>/')
 @app.route('/extends/page/<int:page>')
 def extends(page):
     g.cur.execute('select count(*) from extend_from_xml where item not like ""')
@@ -120,6 +120,7 @@ def extends(page):
                            pagination=pagination,
                            active_url='extends-page-url',
                            )
+
 
 @app.route('/keyword/search/', methods=['GET', 'POST'])
 @app.route('/keyword/search', methods=['GET', 'POST'])
@@ -149,6 +150,7 @@ def keyword_search():
                                active_url='keywords-page-url',
                                )
     return render_template('keyword-search.html')
+
 
 @app.route('/search', methods=['GET', 'POST'])
 @app.route('/search/', methods=['GET', 'POST'])

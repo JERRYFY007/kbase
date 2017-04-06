@@ -3,7 +3,6 @@ from flask import render_template, g, request,redirect,url_for
 from app import app
 
 
-
 @app.route('/knowledge/view', defaults={'id': 1}, methods=['GET'])
 @app.route('/knowledge/view/', defaults={'id': 1}, methods=['GET'])
 @app.route('/knowledge/view/<int:id>/')
