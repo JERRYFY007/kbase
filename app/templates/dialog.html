@@ -2,15 +2,6 @@
 {% block body %}
 <br>
 <form class="form-horizontal" action="{{ url_for('dialog') }}" method="post">
-    {% if dialog %}
-    <div class="form-group">
-        <label for="dialog" class="col-md-offset-1 col-md-1 control-label">对话窗口:</label>
-        <div class="col-md-6">
-            {{ dialog.question }}
-            <textarea class="text" rows="20">{{ dialog.answer }}</textarea>
-        </div>
-    </div>
-    {% endif %}
     <div class="form-group">
         <label for="question" class="col-md-2 control-label">输入问题:</label>
         <div class="col-md-5">
@@ -21,6 +12,18 @@
         </div>
     </div>
 </form>
+<br>
+
+{% if dialog %}
+	<dl class="dl-horizontal col-md-5 col-md-offset-1">
+		<dt> Question: </dt>
+		<dd> {{ question }} </dd>
+		<br>
+		<dt> Answer: </dt>
+        <dd> {{ answer }} </dd>
+		<br>
+    </dl>
+{% endif %}
 {% endblock %}
 
 {% block js %}

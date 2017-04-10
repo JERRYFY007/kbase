@@ -3,18 +3,20 @@
 # @file:view.py
 # @time:2017/3/29
 from __future__ import unicode_literals
-
 import sqlite3
-
 import click
 from flask import render_template, g, current_app, request
 from flask_paginate import Pagination, get_page_args
-from app import knowledge, segment
 from app import app
+from app import knowledge, segment, dialog
+from .segment import *
 
 click.disable_unicode_literals_warning = True
 app.config.from_pyfile('app.cfg')
 db_filename = 'knowledge.db'
+wordsdict1 = gen_dict1("app/dict/synonym.dict")
+wordsdict2 = gen_dict2("app/dict/keywordxml.dict")
+wordsdict3 = gen_dict("app/dict/dict.txt")
 
 
 @app.before_request
@@ -205,32 +207,6 @@ def add():
                                pagination=pagination,
                                )
     return render_template('knowledge-add.html')
-
-
-@app.route('/dialog', methods=['GET', 'POST'])
-@app.route('/dialog/', methods=['GET', 'POST'])
-def dialog():
-    if request.method == 'POST':
-        sql = 'select count(*) from knowledge_from_xml where question like ? '
-        args = ('%{}%'.format(request.form.get('question')),)
-        g.cur.execute(sql, args)
-        total = g.cur.fetchone()[0]
-
-        page, per_page, offset = get_page_args()
-        sql = 'select * from knowledge_from_xml where question like ? limit {}, {}'
-        g.cur.execute(sql.format(offset, per_page), args)
-        knowledges = g.cur.fetchall()
-        pagination = get_pagination(page=page,
-                                    per_page=per_page,
-                                    total=total,
-                                    record_name='对话',
-                                    )
-        return render_template('knowledge.html', knowledges=knowledges,
-                               page=page,
-                               per_page=per_page,
-                               pagination=pagination,
-                               )
-    return render_template('dialog.html')
 
 
 def get_css_framework():

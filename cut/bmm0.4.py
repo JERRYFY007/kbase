@@ -19,8 +19,8 @@ def gen_dict1(dictfile):
     dictionary_seg = {}
     with open(dictfile, "r", encoding='utf-8') as f:
         for line in f:
-            word = line.strip()
-            dictionary_seg[word] = len(line)
+            word, freg = line.strip().split(',')
+            dictionary_seg[word] = str(freg)
     f.close()
     print("The volumn of dictionary: %d" % (len(dictionary_seg)))
     return dictionary_seg
@@ -66,8 +66,8 @@ def mmcut2(sentence, wordsdict1, wordsdict2, RMM=True):
             word = sentence
             w_length = len(word)
             while w_length > 0:
-                if word in wordsdict1 or w_length == 1:
-                    result_s += word + "/"
+                if word in wordsdict1:
+                    result_s += "@" + word + "," + str(wordsdict1.get(word)) + "/"
                     sentence = sentence[w_length:]
                     break
                 elif word in wordsdict2 or w_length == 1:
@@ -83,8 +83,8 @@ def mmcut2(sentence, wordsdict1, wordsdict2, RMM=True):
             word = sentence
             w_length = len(word)
             while w_length > 0:
-                if word in wordsdict1 or w_length == 1:
-                    result_s = word + "/" + result_s
+                if word in wordsdict1:
+                    result_s = "@" + word + "," + str(wordsdict1.get(word)) + "/" + result_s
                     sentence = sentence[:s_length - w_length]
                     break
                 elif word in wordsdict2 or w_length == 1:
@@ -98,22 +98,22 @@ def mmcut2(sentence, wordsdict1, wordsdict2, RMM=True):
     return result_s
 
 
-wordsdict1 = gen_dict1("keywordxml.dic")
+wordsdict1 = gen_dict1("keywordxml.dict")
 wordsdict2 = gen_dict("../jieba.dict.utf8")
-desfmm = open('answer_bmm1.txt', 'w', encoding='utf-8')
-desrmm = open('answer_bmm2.txt', 'w', encoding='utf-8')
+desfmm = open('question_bmm1.txt', 'w', encoding='utf-8')
+desrmm = open('question_bmm2.txt', 'w', encoding='utf-8')
 
-with open('answer.txt', 'r', encoding='utf-8') as src:
-    for j in tqdm(range(3570)):
-        sentence = src.readline()
+with open('question.txt', 'r', encoding='utf-8') as src:
+    for j in tqdm(range(3000)):
+        sentence = src.readline().strip().lower()
         if not sentence: break
         segfmm = []
         segrmm = []
         segfmm.append(''.join(mmcut2(sentence, wordsdict1, wordsdict2, RMM=False)))
         segrmm.append(''.join(mmcut2(sentence, wordsdict1, wordsdict2)))
         for word in segfmm:
-            desfmm.write(word + '/')
+            desfmm.write(word + '\n')
         for word in segrmm:
-            desrmm.write(word + '/')
+            desrmm.write(word + '\n')
 desfmm.close()
 desrmm.close()
