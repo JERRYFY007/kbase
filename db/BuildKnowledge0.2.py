@@ -2,6 +2,7 @@
 import string
 import re
 from lxml import etree
+import json
 
 xml_filename1 = 'knowledge.xml'
 

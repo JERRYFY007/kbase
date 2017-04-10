@@ -14,9 +14,9 @@ from .segment import *
 click.disable_unicode_literals_warning = True
 app.config.from_pyfile('app.cfg')
 db_filename = 'knowledge.db'
-wordsdict1 = gen_dict1("app/dict/synonym.dict")
-wordsdict2 = gen_dict2("app/dict/keywordxml.dict")
-wordsdict3 = gen_dict("app/dict/dict.txt")
+# wordsdict1 = gen_dict1("app/dict/synonym.dict")
+# wordsdict2 = gen_dict2("app/dict/keywordxml.dict")
+# wordsdict3 = gen_dict("app/dict/dict.txt")
 
 
 @app.before_request
@@ -230,11 +230,11 @@ def get_pagination(**kwargs):
                       )
 
 
-@click.command()
-@click.option('--port', '-p', default=5000, help='listening port')
-def run(port):
-    app.run(debug=True, port=port, host='0.0.0.0')
+#@click.command()
+#@click.option('--port', '-p', default=5000, help='listening port')
+#def run(port):
+#    app.run(debug=True, port=port, host='0.0.0.0')
 
 
-if __name__ == '__main__':
-    run()
+#if __name__ == '__main__':
+#    run()
