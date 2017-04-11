@@ -7,169 +7,6 @@ from app import *
 from .segment import *
 from lxml import etree
 
-class Knowledge(object):
-    def __init__(self):
-        self.qa_id = []
-        self.question = []
-        self.answer = []
-        self.extend = []    # 扩展问列表
-        self.point = []  # 匹配分数
-
-    def load(self, xml_filename):
-        print("Building Knowledge dictionary...")
-        root = etree.parse(xml_filename).getroot()
-        qa_id = 0
-        qa_data = []
-        for knowledge in root:
-            qa_id += 1
-            ex_id = 0
-            ex_data = []
-            for field in knowledge:
-                if field.text is None:
-                    ex_id += 1
-                    kw_data = []
-                    for item in field:
-                        row_data = []
-                        for keywords in item:
-                            row_data.append(keywords.text.strip())
-                        kw_data.append(row_data)
-                    ex_data.append(ex_id)
-                    ex_data.append(kw_data)
-                else:
-                    qa_data.append(field.text.strip())
-            self.qa_id.append(qa_id)
-            self.question.append(qa_data[0])
-            self.answer.append(qa_data[1])
-            qa_data.clear()
-            self.extend.append(ex_data)
-            self.point.append(0.0)
-        # print(self.answer[7])
-        print("The volumn of dictionary:", len(self.question), len(self.answer), len(self.extend))
-        return
-
-    def answer(self, qa_id):
-        print(qa_id)
-        qa_id -= 1
-        return self.question[qa_id], self.answer[qa_id]
-
-
-class Extend(object):
-    def __init__(self):
-        self.keyword = []  # 读取时只有keyword的value，在正式运行的程序里才会关联Keyword
-        self.canOmit = []
-        self.synonym = []   # 局部同义词列表
-        self.qa_id = []
-        self.ex_id = []
-        self.kw_id = []
-        self.sy_id = []
-        self.point = []
-
-
-    def load(self, xml_filename):
-        print("Building Extend dictionary...")
-        root = etree.parse(xml_filename).getroot()
-        qa_id = 0
-        for knowledge in root:
-            qa_id = qa_id + 1
-            ex_id = 0
-            for field in knowledge:
-                if field.text is None:
-                    ex_id = ex_id + 1
-                    kw_id = 0
-                    for item in field:
-                        row_data = []
-                        kw_id += 1
-                        for keywords in item:
-                            row_data.append(keywords.text.strip())
-                        sy_data = []
-                        while len(row_data) >= 3:
-                            sy_id = len(row_data) - 2
-                            sy_data.append(sy_id)
-                            sy_data.append(row_data[-1].lower())
-                            row_data.pop(-1)
-                        sy_id = 0
-                        self.keyword.append(row_data[0].lower().strip())
-                        self.canOmit.append(row_data[1])
-                        self.synonym.append(sy_data)
-                        self.qa_id.append(qa_id)
-                        self.ex_id.append(ex_id)
-                        self.kw_id.append(kw_id)
-                        self.sy_id.append(sy_id)
-                        self.point.append(0.0)
-        print(self.keyword)
-        print("The volumn of Extend dictionary:", len(self.keyword), len(self.canOmit), len(self.synonym)  )
-        return
-
-    def extend_word_point(self, word, point):
-        # print(point)
-        match, unmatch = 0, 0
-        success = False
-        p = point
-        word = word.strip()
-        print(word)
-        if word in self.keyword:
-            i = self.keyword.index(word)
-            print(i)
-            self.point[i] += p
-            #else:
-                #self.point[i] -= p
-        return
-
-    def extend_point(self):
-        find = []
-        max = 0
-        match, unmatch = 0, 0
-        success = False
-        print(len(self.point))
-        for i in range(len(self.point)):
-            if self.point[i] > 0:
-                if self.point[i] > max:
-                    max = self.point[i]
-                    find.append(self.qa_id[i])
-                    find.append(self.ex_id[i])
-                    find.append(self.point[i])
-
-        return find
-
-
-class Keyword(object):
-    def __init__(self):
-        self.keyword = []
-        self.importance = []    # 关键词的值
-        self.synonym = []   # 全局同义词列表
-        self.type = []  # 一级类型
-        self.type2 = [] # 二级类型
-        self.info = []  # 附加信息：如人名关键词的附加信息info为其电话号码
-
-    def load(self, xml_filename):
-        print("Building Keyword dictionary...")
-        root = etree.parse(xml_filename).getroot()
-        for keywords in root:
-            row_data = []
-            for item in keywords:
-                row_data.append(item.text.strip())
-            while len(row_data) > 3:
-                self.keyword.append(row_data[0])
-                self.importance.append(row_data[1])
-                self.synonym.append(row_data[-1])
-                row_data.pop(-1)
-            if len(row_data) == 3:
-                self.keyword.append(row_data[0])
-                self.importance.append(row_data[1])
-                self.synonym.append(row_data[-1])
-            elif len(row_data) == 2:
-                self.keyword.append(row_data[0])
-                self.importance.append(row_data[1])
-                self.synonym.append('')
-        # print(self.keyword, self.importance, self.synonym)
-        print("The volumn of dictionary:", len(self.keyword), len(self.importance), len(self.synonym)  )
-        return
-
-    def importance(self, word):
-        while word in self.keyword:
-            return float(self.importance[self.keyword.index(word)])
-        return 0
-
 
 def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
     result_s = []
@@ -221,12 +58,117 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
             s_length = len(sentence)
     return result_s
 
-knowledge = Knowledge()
-knowledge.load("app/dict/knowledge.xml")
-extend = Extend()
-extend.load("app/dict/knowledge.xml")
-keyword = Keyword()
-keyword.load("app/dict/keyword.xml")
+
+def load_keyword_dict(xml_filename):
+    print("Building Keyword & Synonym dictionary...")
+    root = etree.parse(xml_filename).getroot()
+    keyword_no, synonym_no = 0, 0
+    dict_keyword, dict_synonym = {}, {}
+    for keyword in root:
+        row_data = []
+        for item in keyword:
+            row_data.append(item.text.strip())
+        while len(row_data) >= 3:
+            synonym_no += 1
+            value = row_data[0].lower()
+            synonym = row_data[-1].lower()
+            importance = float(row_data[1])
+            dict_keyword[value] = importance
+            dict_synonym[synonym] = value
+            row_data.pop(-1)
+        if len(row_data) == 2:
+            keyword_no += 1
+            value = row_data[0].lower()
+            importance = float(row_data[1])
+            dict_keyword[value] = importance
+    print('Process Keyword: ', keyword_no)
+    print('Process Synonym: ', synonym_no)
+    print('Process Keyword Dict: ', len(dict_keyword))
+    print('Process Synonym Dict: ', len(dict_synonym))
+    print("The volumn of Keyword & Synonym dictionary:", len(dict_keyword), len(dict_synonym))
+    return dict_keyword, dict_synonym
+
+
+def load_extend_dict(xml_filename):
+    print("Building Extend & Knownledge dictionary...")
+    root = etree.parse(xml_filename).getroot()
+    qa_id, ex_no = 0, 0
+    dict_question, dict_answer = {}, {}
+    dict_extend, dict_extend_item, dict_extend_point = {}, {}, {}
+    for knowledge in root:
+        qa_id = qa_id + 1
+        qa_data = []
+        ex_id = 0
+        for field in knowledge:
+            if field.text is None:
+                ex_id = ex_id + 1
+                for item in field:
+                    row_data = []
+                    extend_item = []
+                    qa_ex = str(qa_id) + ':' + str(ex_id)
+                    dict_extend_point[qa_ex] = 0.0
+                    for keyword in item:
+                        row_data.append(keyword.text.strip())
+                    while len(row_data) >= 3:
+                        extend = row_data[-1].lower()
+                        extend_item.append(extend)
+                        dict_extend_item[qa_ex] = extend_item
+                        if extend in dict_extend:
+                            temp = dict_extend.get(extend)
+                            temp.append(qa_ex)
+                            dict_extend[extend] = temp
+                        else:
+                            temp = []
+                            temp.append(qa_ex)
+                            dict_extend[extend] = temp
+                        row_data.pop(-1)
+                    if len(row_data) == 2:
+                        extend = row_data[0].lower()
+                        dict_extend_item[qa_ex] = extend
+                        if extend in dict_extend:
+                            temp = dict_extend.get(extend)
+                            temp.append(qa_ex)
+                            dict_extend[extend] = temp
+                        else:
+                            temp = []
+                            temp.append(qa_ex)
+                            dict_extend[extend] = temp
+                        dict_extend_item[qa_ex] = extend
+            else:
+                qa_data.append(field.text.strip())
+        ex_no += ex_id
+        dict_question[qa_id] = qa_data[0]
+        dict_answer[qa_id] = qa_data[1]
+    print("Process Extend Dict: ", len(dict_extend))
+    print("Process QA: ", qa_id)
+    print("Process Extend: ", ex_no)
+    print("The volumn of Extend & Knownledge dictionary:", len(dict_extend), len(dict_extend_point), len(dict_question), len(dict_answer))
+    return dict_extend, dict_extend_point, dict_question, dict_answer
+
+
+def countPoint(items):
+    best, max, match, unmatch = 0.0, 0.0, 0.0, 0.0   # 最佳分，最高分，匹配分，不匹配分
+    point = 0.0   # 当前分
+    for item in dict_extend:
+        if item in items:
+            match += dict_keyword.get(item)
+        else:
+            unmatch -= dict_keyword.get(item)
+        print(match, unmatch)
+
+    for item in items:
+        if item in dict_extend:
+            for qa_ex in dict_extend.get(item):
+                p = dict_keyword.get(item)
+                dict_extend_point[qa_ex] = dict_extend_point.get(qa_ex) + dict_keyword.get(item)
+    for i in dict_extend_point:
+        if dict_extend_point.get(i) > max:
+            max = dict_extend_point.get(i)
+            print(i, dict_extend_point.get(i))
+    return
+
+dict_extend, dict_extend_point, dict_question, dict_answer = load_extend_dict("app/dict/knowledge.xml")
+dict_keyword, dict_synonym = load_keyword_dict("app/dict/keyword.xml")
 
 
 @app.route('/dialog', methods=['GET', 'POST'])
@@ -235,22 +177,20 @@ def dialog():
     if request.method == 'POST':
         question = request.form.get('question')
         answer = []
+        items = []
+        point = 0.0
+
         fmm1 = fmmcut(question, wordsdict1, wordsdict2, wordsdict3)
         print(fmm1)
-        point = 0.0
         answer.append(fmm1)
         for word in fmm1:
             if '@' in word:
-                word1, impo = word.strip().split(',')
-                _, word = word1.strip().split('@')
-                print(word, impo)
-                point += Keyword.importance(keyword, word)
-                answer.append(word)
-                Extend.extend_word_point(extend, word, float(impo))
-        ex_data = Extend.extend_point(extend)
-        print(ex_data)
-        qa_id = ex_data[0]
-        answer.append(Knowledge.answer(knowledge, qa_id))
+                word, importance = word.strip().split(',')
+                _, word = word.strip().split('@')
+                print(word, importance)
+                answer.append(word + ' ' + importance)
+                items.append(word)
+        point = countPoint(items)
         print(point)
         return render_template('dialog.html', dialog = True, question = question, answers = answer, )
     return render_template('dialog.html',)
