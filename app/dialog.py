@@ -63,6 +63,7 @@ def load_keyword_dict(xml_filename):
     print("Building Keyword & Synonym dictionary...")
     root = etree.parse(xml_filename).getroot()
     keyword_no, synonym_no = 0, 0
+    importance = 0.0
     dict_keyword, dict_synonym = {}, {}
     for keyword in root:
         row_data = []
@@ -102,17 +103,17 @@ def load_extend_dict(xml_filename):
         for field in knowledge:
             if field.text is None:
                 ex_id = ex_id + 1
+                extend_item = []
+                qa_ex = str(qa_id) + ':' + str(ex_id)
                 for item in field:
-                    row_data = []
-                    extend_item = []
-                    qa_ex = str(qa_id) + ':' + str(ex_id)
                     dict_extend_point[qa_ex] = 0.0
+                    row_data = []
                     for keyword in item:
                         row_data.append(keyword.text.strip())
+                        extend_item.append(keyword.text.strip())
                     while len(row_data) >= 3:
                         extend = row_data[-1].lower()
                         extend_item.append(extend)
-                        dict_extend_item[qa_ex] = extend_item
                         if extend in dict_extend:
                             temp = dict_extend.get(extend)
                             temp.append(qa_ex)
@@ -124,7 +125,6 @@ def load_extend_dict(xml_filename):
                         row_data.pop(-1)
                     if len(row_data) == 2:
                         extend = row_data[0].lower()
-                        dict_extend_item[qa_ex] = extend
                         if extend in dict_extend:
                             temp = dict_extend.get(extend)
                             temp.append(qa_ex)
@@ -133,7 +133,8 @@ def load_extend_dict(xml_filename):
                             temp = []
                             temp.append(qa_ex)
                             dict_extend[extend] = temp
-                        dict_extend_item[qa_ex] = extend
+                if extend_item:
+                    dict_extend_item[qa_ex] = extend_item
             else:
                 qa_data.append(field.text.strip())
         ex_no += ex_id
@@ -142,19 +143,23 @@ def load_extend_dict(xml_filename):
     print("Process Extend Dict: ", len(dict_extend))
     print("Process QA: ", qa_id)
     print("Process Extend: ", ex_no)
-    print("The volumn of Extend & Knownledge dictionary:", len(dict_extend), len(dict_extend_point), len(dict_question), len(dict_answer))
-    return dict_extend, dict_extend_point, dict_question, dict_answer
+    print("The volumn of Extend & Knownledge dictionary:", len(dict_extend), len(dict_extend_point), len(dict_extend_item), len(dict_answer))
+    return dict_extend, dict_extend_point, dict_extend_item, dict_answer
 
 
 def countPoint(items):
     best, max, match, unmatch = 0.0, 0.0, 0.0, 0.0   # 最佳分，最高分，匹配分，不匹配分
     point = 0.0   # 当前分
-    for item in dict_extend:
-        if item in items:
-            match += dict_keyword.get(item)
-        else:
-            unmatch -= dict_keyword.get(item)
-        print(match, unmatch)
+    for i in dict_extend_item:
+        for item in dict_extend_item.get(i):
+            if item in items:
+                match += dict_keyword.get(item)
+                dict_extend_point[i] += dict_keyword.get(item)
+            elif item in dict_keyword:
+                unmatch -= dict_keyword.get(item)
+                dict_extend_point[i] -= dict_keyword.get(item)
+        if dict_extend_point[i] > 0:
+            print(dict_extend_point[i], dict_extend_item[i])
 
     for item in items:
         if item in dict_extend:
@@ -164,10 +169,10 @@ def countPoint(items):
     for i in dict_extend_point:
         if dict_extend_point.get(i) > max:
             max = dict_extend_point.get(i)
-            print(i, dict_extend_point.get(i))
+            # print(i, dict_extend_point.get(i))
     return
 
-dict_extend, dict_extend_point, dict_question, dict_answer = load_extend_dict("app/dict/knowledge.xml")
+dict_extend, dict_extend_point, dict_extend_item, dict_answer = load_extend_dict("app/dict/knowledge.xml")
 dict_keyword, dict_synonym = load_keyword_dict("app/dict/keyword.xml")
 
 
@@ -191,6 +196,6 @@ def dialog():
                 answer.append(word + ' ' + importance)
                 items.append(word)
         point = countPoint(items)
-        print(point)
+        # print(point)
         return render_template('dialog.html', dialog = True, question = question, answers = answer, )
     return render_template('dialog.html',)

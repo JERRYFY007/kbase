@@ -24,10 +24,10 @@ for knowledge in root:
             kw_id = 0
             extend_item = []
             qa_ex = str(qa_id) + ':' + str(ex_id)
+            dict_extend_point[qa_ex] = 0.0
             for item in field:
                 row_data = []
                 kw_id += 1
-                dict_extend_point[qa_ex] = 0.0
                 for keyword in item:
                     sy_id = 0
                     row_data.append(keyword.text.strip())
