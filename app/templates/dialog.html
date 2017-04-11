@@ -20,7 +20,9 @@
 		<dd> {{ question }} </dd>
 		<br>
 		<dt> Answer: </dt>
+		{% for answer in answers %}
         <dd> {{ answer }} </dd>
+		{% endfor %}
 		<br>
     </dl>
 {% endif %}

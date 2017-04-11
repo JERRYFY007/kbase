@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import string
-import re
 from lxml import etree
 
 xml_filename1 = 'knowledge.xml'

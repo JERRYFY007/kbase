@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-import string
-import re
 from lxml import etree
-import json
 
 xml_filename1 = 'knowledge.xml'
 
@@ -12,9 +9,9 @@ root = tree.getroot()
 
 que_data = []
 ans_data = []
-ex_data, ex2_data = [], []
+ex_data = ['Item, QA,  Extend, Synonym, Synonym']
 qa_id = 0
-ex_nu = 0
+ex_no, kw_no, sy_no = 0, 0, 0
 for knowledge in root:
     qa_id = qa_id + 1
     qa_data = []
@@ -22,28 +19,37 @@ for knowledge in root:
     for field in knowledge:
         if field.text is None:
             ex_id = ex_id + 1
+            kw_id = 0
             for item in field:
                 row_data = []
-                ky_id = 0
+                kw_id += 1
                 for keyword in item:
-                    ky_id += 1
+                    sy_id = 0
                     row_data.append(keyword.text.strip())
-                if len(row_data) == 2:
-                    ex_data.append(row_data[0].lower() + ',' + str(qa_id) + '-' + str(ex_id) + '-' + str(ky_id) + '\n')
-                    ex2_data.append(row_data[0].lower() + '/')
-                elif len(row_data) >= 3:
-                    ex2_data.append(row_data[-1].lower() + '|')
+                sy_no += len(row_data) - 2
+                while len(row_data) > 3:
+                    sy_id = len(row_data) - 2
+                    ex_data.append('\n' + row_data[-1].lower() + ',' + str(qa_id) + ',' + str(ex_id) + ',' + str(kw_id) + ',' + str(sy_id))
                     row_data.pop(-1)
-            ex2_data.append(',' + str(qa_id) + '-' + str(ex_id) + '\n')
+                if len(row_data) == 3:
+                    sy_id = 1
+                    ex_data.append('\n' + row_data[-1].lower() + ',' + str(qa_id) + ',' + str(ex_id) + ',' + str(kw_id) + ',' + str(sy_id))
+                    sy_id = 0
+                    ex_data.append('\n' + row_data[0].lower() + ',' + str(qa_id) + ',' + str(ex_id) + ',' + str(kw_id) + ',' + str(sy_id))
+                elif len(row_data) == 2:
+                    sy_id = 0
+                    ex_data.append('\n' + row_data[0].lower() + ',' + str(qa_id) + ',' + str(ex_id) + ',' + str(kw_id) + ',' + str(sy_id))
+            kw_no += kw_id
         else:
             qa_data.append(field.text.strip())
-    ex_nu += ex_id
+    ex_no += ex_id
     que_data.append(qa_data[0] + '\n')
     ans_data.append(qa_data[1] + '\n')
 print("Process QA: ", qa_id)
-print("Process Extend: ", ex_nu)
+print("Process Extend: ", ex_no)
+print("Process Keyword: ", kw_no)
+print("Process Local Synonym: ", sy_no)
 open('question.txt', 'w', encoding='utf8').writelines(que_data)
 open('answer.txt', 'w', encoding='utf8').writelines(ans_data)
-open('extend1.dict', 'w', encoding='utf8').writelines(ex_data)
-open('extend2.dict', 'w', encoding='utf8').writelines(ex2_data)
+open('extend.dict', 'w', encoding='utf8').writelines(ex_data)
 print("Knowledge.xml 文件建立完成! (question.txt & answer.txt & extend.dict)")
