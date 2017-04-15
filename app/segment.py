@@ -96,7 +96,7 @@ def mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, RMM=True):
 
 
 wordsdict1 = gen_dict1("app/dict/synonym.dict")
-wordsdict2 = gen_dict2("app/dict/keyword.dict")
+wordsdict2 = gen_dict2("app/dict/keyword.dic")
 wordsdict3 = gen_dict("app/dict/dict.txt")
 
 

@@ -4,8 +4,8 @@ from lxml import etree
 xml_filename = 'keyword.xml'
 
 # Process keyword.xml
-kw_data = ['value, importance']
-sy_data = ['synonym, keyword']
+kw_data = ['value,importance']
+sy_data = ['synonym,keyword']
 root = etree.parse(xml_filename).getroot()
 keyword_no, synonym_no = 0, 0
 dict_keyword, dict_synonym = {}, {}

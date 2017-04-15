@@ -8,7 +8,7 @@ import click
 from flask import render_template, g, current_app, request
 from flask_paginate import Pagination, get_page_args
 from app import app
-from app import knowledge, segment, dialog
+from app import knowledge, qa
 from .segment import *
 
 click.disable_unicode_literals_warning = True
