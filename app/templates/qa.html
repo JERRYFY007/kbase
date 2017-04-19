@@ -16,11 +16,13 @@
 
 {% if qa %}
 	<dl class="dl-horizontal col-md-5 col-md-offset-1">
+		{% for question in questions %}
 		<dt> Question: </dt>
 		<dd> {{ question }} </dd>
+		{% endfor %}
 		<br>
-		<dt> Answer: </dt>
 		{% for answer in answers %}
+		<dt> Answer: </dt>
         <dd> {{ answer }} </dd>
 		{% endfor %}
 		<br>

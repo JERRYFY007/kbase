@@ -67,13 +67,12 @@ def load_dataframe(xml_filename):
     # Process knowledge.xml
     tree = etree.parse(xml_filename)
     root = tree.getroot()
-    extends, dict_question, dict_answer = {}, {}, {}
+    extends = {}
     qa_ex, items, local_synonym = [], [], []
     keyword_value, importance, global_synonym = [], [], []
     qa_id, ex_no, kw_no, sy_no = 0, 0, 0, 0
     for knowledge in root:
         qa_id = qa_id + 1
-        qa_data = []
         ex_id = 0
         for field in knowledge:
             if field.text is None:
@@ -95,19 +94,35 @@ def load_dataframe(xml_filename):
                         items.append(row_data[0].lower())
                         local_synonym.append(row_data[-1])
                 kw_no += kw_id
-            else:
-                qa_data.append(field.text.strip())
-        dict_question[qa_id] = qa_data[0]
-        dict_answer[qa_id] = qa_data[1]
-
     extends['qa_id:ex_id'] = qa_ex
     extends['Item'] = items
     extends['synonym'] = local_synonym
     df_extend = pd.DataFrame(extends)
     df_keyword = read_csv("app/dict/keyword.dict", encoding='utf8')
     df_extend = pd.merge(df_extend, df_keyword, how='left', on='Item')
-    print("The volumn of Extend & Keyword Dataframe:", len(df_extend), len(df_keyword), len(dict_question), len(dict_answer))
-    return df_extend, df_keyword, dict_answer
+    print("The volumn of Extend & Keyword Dataframe:", len(df_extend), len(df_keyword))
+    return df_extend, df_keyword
+
+
+def load_qa(xml_filename):
+    print("Building Question & Answer Dict...")
+    # Process knowledge.xml
+    tree = etree.parse(xml_filename)
+    root = tree.getroot()
+    dict_question, dict_answer = {}, {}
+    qa_id = 0
+    for knowledge in root:
+        qa_id = qa_id + 1
+        qa_data = []
+        for field in knowledge:
+            if field.text is None:
+                continue
+            else:
+                qa_data.append(field.text.strip())
+        dict_question[qa_id] = qa_data[0]
+        dict_answer[qa_id] = qa_data[1]
+    print("The volumn of Question & Answer Dict:", len(dict_question), len(dict_answer))
+    return dict_question, dict_answer
 
 
 def countPoint(df_extend, df_seg):
@@ -144,29 +159,31 @@ def countPoint(df_extend, df_seg):
     match = max(dict_qa_point, key=dict_qa_point.get)
     match_id.append(match)
     print("MAX4: ", match, dict_qa_point[match])
-    dict_qa_point.pop(match)
-    match = max(dict_qa_point, key=dict_qa_point.get)
-    match_id.append(match)
-    print("MAX5: ", match, dict_qa_point[match])
     print(match_id)
     return match_id
 
 
-def get_answer(dict_answers, items):
-    answers = []
+def get_qa(dict_question, dict_answers, items):
+    questions, answers = [], []
     i = 0
     for item in items:
         qa_id, ex_id = item.strip().split(':')
         print(qa_id, ex_id)
-        if int(qa_id) in dict_answers:
-            print("Find answer!", i)
+        if int(qa_id) in dict_question:
+            print("Find question & answer!", i)
             i += 1
+            questions.append(str(i) + ':' + dict_question.get(int(qa_id)))
             answers.append(str(i) + ':' + dict_answers.get(int(qa_id)))
-    return answers
+    return questions, answers
+
+df_extend, df_keyword = load_dataframe("app/dict/knowledge.xml")
+dict_question, dict_answer = load_qa("app/dict/knowledge.xml")
 
 
-df_extend, df_keyword, dict_answer = load_dataframe("app/dict/knowledge.xml")
+def CountPoint():
+    max =0
 
+    return
 
 @app.route('/qa', methods=['GET', 'POST'])
 @app.route('/qa/', methods=['GET', 'POST'])
@@ -174,6 +191,7 @@ def qa():
     if request.method == 'POST':
         question = request.form.get('question')
         answer = {}
+        best_question, best_answer = [], []
         items = []
 
         fmm1 = fmmcut(question, wordsdict1, wordsdict2, wordsdict3)
@@ -194,7 +212,7 @@ def qa():
         print(df_seg)
         items = countPoint(df_extend, df_seg)
         print(items)
-        answer = get_answer(dict_answer, items)
-        print(answer)
-        return render_template('qa.html', qa = True, question = question, answers = answer, )
+        best_question, best_answer = get_qa(dict_question, dict_answer, items)
+        print(best_question, best_answer)
+        return render_template('qa.html', qa = True, questions = best_question, answers = best_answer, )
     return render_template('qa.html',)
