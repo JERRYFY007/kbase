@@ -39,7 +39,8 @@ for knowledge in root:
                     while len(row_data) >= 3:
                         extend_item.append('\n' + qa_ex + ',' + row_data[0].lower() + ',' + row_data[1].lower() + ',')
                         extend_item.append(row_data[-1].lower())
-                        extend.append(row_data[0].lower() + '|' + row_data[-1].lower() + ';')
+                        extend.append(row_data[0].lower() + ';')
+                        # extend.append(row_data[0].lower() + '|' + row_data[-1].lower() + ';')
                         row_data.pop(-1)
             if extend:
                 # print(extend)
