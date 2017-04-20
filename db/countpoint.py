@@ -42,7 +42,8 @@ with open("extend_point.df", encoding='utf8') as f:
                     success = True
                 else:
                     unmatch += float(dict_keyword.get(item)) * 0.3
-            print(qa_ex_id, max, match, unmatch)
+            if match > unmatch:
+                print(qa_ex_id, max, match, unmatch)
         if max != 0.0:
             point = (match - unmatch) / max
             # print(qa_ex_id, point)
