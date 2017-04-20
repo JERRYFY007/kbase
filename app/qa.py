@@ -93,30 +93,34 @@ def load_qa(xml_filename):
     print("The volumn of Question & Answer Dict:", len(dict_question), len(dict_answer))
     return dict_question, dict_answer
 
-
-def get_qa(dict_question, dict_answers, items):
-    questions, answers = [], []
-    i = 0
-    print(items)
-    for item in items:
-        print(item)
-        qa_id, ex_id = item.strip().split(':')
-        print(qa_id, ex_id)
-        if int(qa_id) in dict_question:
-            print("Find question & answer!", i)
-            i += 1
-            questions.append(str(i) + ':' + dict_question.get(int(qa_id)))
-            answers.append(str(i) + ':' + dict_answers.get(int(qa_id)))
-    return questions, answers
-
 dict_keyword, dict_extend_item = load_dataframe()
 dict_question, dict_answer = load_qa("app/dict/knowledge.xml")
+class Answers():
+    def __init__(self):
+        self.id = 0
+        self.point = float
+        self.question = ''
+        self.answer = ''
+
+
+def get_qa(items):
+    question, answer = [], []
+    if len(items) > 4:
+        max5 = 4
+    else:
+        max5 = len(items)
+    for j in range(max5):
+        qa_id = items[j]
+        if int(qa_id) in dict_question:
+            print("Find question & answer!")
+            question.append(dict_question.get(int(qa_id)))
+            answer.append(dict_answer.get(int(qa_id)))
+    return question, answer
 
 
 def CountPoint(dict_seg):
     with open("app/dict/extend_point.df", encoding='utf8') as f:
-        best_id = ''
-        best = 0
+        best_id, best = [''], [0.0]
         for line in f:
             (qa_ex_id, _, _, _, _) = line.strip().split(',')
             point, max, match, unmatch = 0.0, 0.0, 0.0, 0.0
@@ -132,10 +136,14 @@ def CountPoint(dict_seg):
                         unmatch += float(dict_keyword.get(item)) * 0.3
             if max != 0.0:
                 point = (match - unmatch) / max
-                # print(qa_ex_id, point)
-                if point > best:
-                    best = point
-                    best_id = qa_ex_id
+                if point > 0.8:
+                    print(qa_ex_id, match, unmatch, max, point)
+                if point >= best[0]:
+                    (qa_id, _) = qa_ex_id.split(':')
+                    best.insert(0, point)
+                    best_id.insert(0, qa_id)
+        best.pop(-1)
+        best_id.pop(-1)
         print('Best ID & point:', best_id, best)
     return best_id, best
 
@@ -146,20 +154,19 @@ def qa():
     if request.method == 'POST':
         question = request.form.get('question')
         dict_seg = {}
-        best_question, best_answer = [], []
-        items = []
         fmm1 = fmmcut(question, wordsdict1, wordsdict2, wordsdict3)
         print(fmm1)
-        item, im = [], []
         for word in fmm1:
             if '@' in word:
                 word, importance = word.strip().split(',')
                 _, word = word.strip().split('@')
                 dict_seg[word] = float(importance)
         print(dict_seg)
-        best_id, best = CountPoint(dict_seg)
-        items.append(best_id)
-        best_question, best_answer = get_qa(dict_question, dict_answer, items)
-        print(best_question, best_answer)
-        return render_template('qa.html', qa = True, questions = best_question, answers = best_answer, )
+        best_id, best_point = CountPoint(dict_seg)
+        question, answer = get_qa(best_id)
+        print(best_id)
+        print(best_point)
+        print(question)
+        print(answer)
+        return render_template('qa.html', qa = True, ids = best_id, points = best_point, questions = question, answers = answer, )
     return render_template('qa.html',)

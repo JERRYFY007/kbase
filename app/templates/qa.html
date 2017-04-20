@@ -15,17 +15,18 @@
 <br>
 
 {% if qa %}
-	<dl class="dl-horizontal col-md-5 col-md-offset-1">
-		{% for question in questions %}
+	<dl class="dl-horizontal col-md-6 col-md-offset-1">
+		{% for n in range(4) %}
+		<dt> ID: </dt>
+		<dd> {{ ids[n] }} </dd>
+		<dt> Point: </dt>
+		<dd> {{ points[n] }} </dd>
 		<dt> Question: </dt>
-		<dd> {{ question }} </dd>
-		{% endfor %}
-		<br>
-		{% for answer in answers %}
+		<dd> {{ questions[n] }} </dd>
 		<dt> Answer: </dt>
-        <dd> {{ answer }} </dd>
-		{% endfor %}
+        <dd> {{ answers[n] }} </dd>
 		<br>
+		{% endfor %}
     </dl>
 {% endif %}
 {% endblock %}

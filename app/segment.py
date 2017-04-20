@@ -25,8 +25,9 @@ def gen_dict2(dictfile):
     dictionary_seg = {}
     with open(dictfile, "r", encoding='utf-8') as f:
         for line in f:
-            word, freg, _ = line.strip().lower().split(',')
-            dictionary_seg[word] = float(freg)
+            word, im = line.strip().lower().split(',')
+            if im != 'importance':
+                dictionary_seg[word] = float(im)
     f.close()
     print("The volumn of dictionary: %d" % (len(dictionary_seg)))
     return dictionary_seg
@@ -96,7 +97,7 @@ def mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, RMM=True):
 
 
 wordsdict1 = gen_dict1("app/dict/synonym.dict")
-wordsdict2 = gen_dict2("app/dict/keyword.dic")
+wordsdict2 = gen_dict2("app/dict/keyword.dict")
 wordsdict3 = gen_dict("app/dict/dict.txt")
 
 
