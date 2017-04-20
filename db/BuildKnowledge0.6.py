@@ -9,12 +9,12 @@ root = tree.getroot()
 
 que_data = []
 ans_data = []
-ex_data = ['qa_id:ex_id,Item,canOmit,synonym']
-extend_point = ['qa_id:ex_id,max,match,unmatch,best']
+extend_item = ['qa_ex_id,Item,canOmit,synonym']
+extend_point = ['qa_ex_id,max,match,unmatch,best']
+dict_extend = ['qa_ex_id,Item']
 qa_id = 0
 ex_no, kw_no, sy_no = 0, 0, 0
-dict_ex = {}
-dict_extend, dict_extend_item, dict_extend_point = {}, {}, {}
+
 for knowledge in root:
     qa_id = qa_id + 1
     qa_data = []
@@ -23,63 +23,41 @@ for knowledge in root:
         if field.text is None:
             ex_id = ex_id + 1
             kw_id = 0
-            extend_item = []
-            qa_ex = str(qa_id) + ',' + str(ex_id)
-            extend_point.append('\n' + str(qa_id) + ':' + str(ex_id) + ',' + '0' + ',' + '0' + ',' + '0' + ',' + '0')
-            dict_extend_point[qa_ex] = 0.0
+            extend = []
+            qa_ex = str(qa_id) + ':' + str(ex_id)
+            extend_point.append('\n' + qa_ex + ',' + '0.0' + ',' + '0.0' + ',' + '0.0' + ',' + '0.0')
             for item in field:
                 row_data = []
                 kw_id += 1
                 for keyword in item:
                     row_data.append(keyword.text.strip())
-                    extend_item.append(keyword.text.strip())
                 sy_no += len(row_data) - 2
                 if len(row_data) == 2:
-                    ex_data.append('\n' + str(qa_id) + ':' + str(ex_id) + ',' + row_data[0].lower() + ',' + row_data[1].lower())
-                    extend = row_data[0].lower()
-                    if extend in dict_ex:
-                        temp = dict_ex.get(extend)
-                        temp.append(qa_ex)
-                        dict_ex[extend] = temp
-                    else:
-                        temp = []
-                        temp.append(qa_ex)
-                        dict_ex[extend] = temp
-                elif len(row_data) >= 3:
-                        ex_data.append('\n' + str(qa_id) + ':' + str(ex_id) + ',' + row_data[0].lower() + ',' + row_data[1].lower() + ',')
-                        ex_data.extend(row_data[2:])
-                        # ex_data.append(',' + '0')
-                        extend = row_data[-1].lower()
-                        if extend in dict_ex:
-                            temp = dict_ex.get(extend)
-                            temp.append(qa_ex)
-                            dict_ex[extend] = temp
-                        else:
-                            temp = []
-                            temp.append(qa_ex)
-                            dict_ex[extend] = temp
-                        # row_data.pop(-1)
-                if extend_item:
-                    dict_extend_item[qa_ex] = extend_item
+                    extend_item.append('\n' + qa_ex + ',' + row_data[0].lower() + ',' + row_data[1].lower())
+                    extend.append(row_data[0].lower() + ';')
+                else:
+                    while len(row_data) >= 3:
+                        extend_item.append('\n' + qa_ex + ',' + row_data[0].lower() + ',' + row_data[1].lower() + ',')
+                        extend_item.append(row_data[-1].lower())
+                        extend.append(row_data[0].lower() + '|' + row_data[-1].lower() + ';')
+                        row_data.pop(-1)
+            if extend:
+                # print(extend)
+                dict_extend.append('\n' + qa_ex + ',')
+                dict_extend.extend(extend)
             kw_no += kw_id
         else:
             qa_data.append(field.text.strip())
     ex_no += ex_id
     que_data.append(str(qa_id) + ',' + qa_data[0] + '\n')
     ans_data.append(str(qa_id) + ',' + qa_data[1] + '\n')
-#for k, v in dict_extend_item.items():
-#   print(k, v)
-# print(len(dict_ex.get('深圳城中村集合')))
-print("Process Extend csv: ", len(dict_ex))
-print("Process Extend Dict: ", len(dict_extend))
-print("Process Extend Item Dict: ", len(dict_extend_item))
-print("Process Extend Point Dict: ", len(dict_extend_point))
 print("Process QA: ", qa_id)
 print("Process Extend: ", ex_no)
 print("Process Keyword: ", kw_no)
 print("Process Local Synonym: ", sy_no)
 open('question.txt', 'w', encoding='utf8').writelines(que_data)
 open('answer.txt', 'w', encoding='utf8').writelines(ans_data)
-open('extend.df', 'w', encoding='utf8').writelines(ex_data)
+open('extend_item.df', 'w', encoding='utf8').writelines(extend_item)
 open('extend_point.df', 'w', encoding='utf8').writelines(extend_point)
-print("Knowledge.xml 文件建立完成! (question.txt & answer.txt & extend.dict)")
+open('extend_item.dict', 'w', encoding='utf8').writelines(dict_extend)
+print("Knowledge.xml 文件建立完成! (question.txt & answer.txt & extend_item.df & extend_point.df)")

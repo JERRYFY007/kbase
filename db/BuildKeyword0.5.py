@@ -37,8 +37,8 @@ print('Process Keyword: ', keyword_no)
 print('Process Synonym: ', synonym_no)
 print('Process Keyword Dict: ', len(dict_keyword))
 print('Process Synonym Dict: ', len(dict_synonym))
-open('keyword.dict', 'w', encoding='utf8').writelines(kw_data)
+open('keyword.df', 'w', encoding='utf8').writelines(kw_data)
 open('synonym.dict', 'w', encoding='utf8').writelines(sy_data)
-print("最终词表文件建立完成! (keyword.dict & synonym.dict)")
+print("最终词表文件建立完成! (keyword.df & synonym.dict)")
 
 
