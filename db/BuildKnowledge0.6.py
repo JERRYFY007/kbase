@@ -1,3 +1,7 @@
+# -*- coding:utf-8 -*-
+# @author:Eric Luo
+# @file:xlsx2xml.py
+# @time:2017/3/11 0011 20:21
 # -*- coding: utf-8 -*-
 from lxml import etree
 
@@ -21,39 +25,39 @@ for knowledge in root:
     qa_data = []
     ex_id = 0
     for field in knowledge:
-        if field.text is None:
+        if field.text is None:	# 处理extend
             ex_id = ex_id + 1
             kw_id = 0
             extend = []
             extend_synonym = []
-            qa_ex = str(qa_id) + ':' + str(ex_id)
-            extend_point.append('\n' + qa_ex + ',' + '0.0' + ',' + '0.0' + ',' + '0.0' + ',' + '0.0')
-            for item in field:
-                row_data = []
+            qa_ex = str(qa_id) + ':' + str(ex_id)	# 生成标准问题加扩展问的id
+            extend_point.append('\n' + qa_ex + ',' + '0.0' + ',' + '0.0' + ',' + '0.0' + ',' + '0.0')	# 初始化各类评分为零
+            for item in field:	
+                row_data = []	# 初始化临时列表
                 kw_id += 1
                 for keyword in item:
-                    row_data.append(keyword.text.strip())
-                sy_no += len(row_data) - 2
-                if len(row_data) == 2:
+                    row_data.append(keyword.text.strip())	# 循环读取extend数据至临时列表
+                sy_no += len(row_data) - 2	# 统计局部同义词数量
+                if len(row_data) == 2:	# 无局部同义词的处理
                     extend_item.append('\n' + qa_ex + ',' + row_data[0].lower() + ',' + row_data[1].lower())
                     extend.append(row_data[0].lower() + ';')
                     extend_synonym.append(row_data[0].lower() + ';')
-                else:
-                    extend_synonym.append(row_data[0].lower())
-                    while len(row_data) >= 3:
+                else:	# 有局部同义词的处理
+                    extend_synonym.append(row_data[0].lower()) # 局部同义词列表
+                    while len(row_data) >= 3:	# 多个局部同义词循环处理
                         extend_item.append('\n' + qa_ex + ',' + row_data[0].lower() + ',' + row_data[1].lower() + ',')
                         extend_item.append(row_data[-1].lower())
                         extend.append(row_data[-1].lower() + ';')
                         extend_synonym.append('|' + row_data[-1].lower())
-                        row_data.pop(-1)
+                        row_data.pop(-1)	# 去掉局部同义词列表最后一个
                     extend_synonym.append(';')
-            if extend:
+            if extend:	# 处理扩展问题
                 dict_extend.append('\n' + qa_ex + ',')
                 dict_extend.extend(extend)
                 dict_extend_synonym.append('\n' + qa_ex + ',')
                 dict_extend_synonym.extend(extend_synonym)
             kw_no += kw_id
-        else:
+        else:	# 处理标准问题及标准答案
             qa_data.append(field.text.strip())
     ex_no += ex_id
     que_data.append(str(qa_id) + ',' + qa_data[0] + '\n')

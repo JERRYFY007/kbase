@@ -6,6 +6,7 @@ from flask import render_template, request
 from app import *
 from app import hmmseg
 from .view import *
+from .pymmseg import *
 
 
 def gen_dict1(dictfile):
@@ -109,6 +110,12 @@ def segment():
         fmm = ''.join(mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, RMM=False))
         rmm = ''.join(mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, ))
         hmm = ''.join(hmmseg.cut(sentence))
+        mmseg = []
+        words = Analysis(sentence)
+        for word in words:
+            print(word)
+            mmseg.append(word)
+        print(mmseg)
         segmented = []
         segmented.append('FMM: ')
         segmented.append(fmm)
@@ -118,6 +125,8 @@ def segment():
         segmented.append('\n')
         segmented.append('HMM: ')
         segmented.append(hmm)
+        segmented.append('MMSEG: ')
+        segmented.append(mmseg)
         analyse = []
         return render_template('segment.html', sentence=sentence, segmented=segmented, analyse=analyse)
     return render_template('segment.html')

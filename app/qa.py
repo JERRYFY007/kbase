@@ -74,37 +74,32 @@ def load_dataframe():
 
 
 def load_qa(xml_filename):
-    print("Building Question & Answer Dict...")
+    print("Building Question, Answer, Branch Dict...")
     # Process knowledge.xml
     tree = etree.parse(xml_filename)
     root = tree.getroot()
-    dict_question, dict_answer = {}, {}
+    dict_question, dict_answer, dict_branch = {}, {}, {}
     qa_id = 0
     for knowledge in root:
         qa_id = qa_id + 1
-        qa_data = []
+        br_id = 0
         for field in knowledge:
-            if field.text is None:
-                continue
-            else:
-                qa_data.append(field.text.strip())
-        dict_question[qa_id] = qa_data[0]
-        dict_answer[qa_id] = qa_data[1]
+            if field.tag == "question":
+                dict_question[qa_id] = field.text
+            if field.tag == "answer":
+                dict_answer[qa_id] = field.text
+            if field.tag == "branch":
+                br_id += 1
+                dict_branch[str(qa_id) + ':' + str(br_id)] = field.text
     print("The volumn of Question & Answer Dict:", len(dict_question), len(dict_answer))
-    return dict_question, dict_answer
+    return dict_question, dict_answer, dict_branch
 
 dict_keyword, dict_extend_item = load_dataframe()
-dict_question, dict_answer = load_qa("app/dict/knowledge.xml")
-class Answers():
-    def __init__(self):
-        self.id = 0
-        self.point = float
-        self.question = ''
-        self.answer = ''
+dict_question, dict_answer, dict_branch= load_qa("app/dict/knowledge.xml")
 
 
 def get_qa(items):
-    question, answer = [], []
+    question, answer, branch = [], [], []
     if len(items) > 4:
         max5 = 4
     else:
@@ -115,7 +110,8 @@ def get_qa(items):
             print("Find question & answer!")
             question.append(dict_question.get(int(qa_id)))
             answer.append(dict_answer.get(int(qa_id)))
-    return question, answer
+            branch.append(dict_branch.get(qa_id))
+    return question, answer, branch
 
 
 def CountPoint(dict_seg):
@@ -163,7 +159,7 @@ def qa():
                 dict_seg[word] = float(importance)
         print(dict_seg)
         best_id, best_point = CountPoint(dict_seg)
-        question, answer = get_qa(best_id)
+        question, answer, branch = get_qa(best_id)
         print(best_id)
         print(best_point)
         print(question)
