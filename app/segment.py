@@ -9,19 +9,7 @@ from .view import *
 from .pymmseg import *
 
 
-def gen_dict1(dictfile):
-    print("Building dictionary...")
-    dictionary_seg = {}
-    with open(dictfile, "r", encoding='utf-8') as f:
-        for line in f:
-            word, sy = line.strip().split(',')
-            dictionary_seg[word] = sy
-    f.close()
-    print("The volumn of dictionary: %d" % (len(dictionary_seg)))
-    return dictionary_seg
-
-
-def gen_dict2(dictfile):
+def gen_keyword_dict(dictfile):
     print("Building dictionary...")
     dictionary_seg = {}
     with open(dictfile, "r", encoding='utf-8') as f:
@@ -46,7 +34,7 @@ def gen_dict(dictfile):
     return dictionary_seg
 
 
-def mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, RMM=True):
+def mmcut(sentence, wordsdict1, wordsdict2, RMM=True):
     sentence = sentence.lower()
     result_s = ""
     s_length = len(sentence)
@@ -56,15 +44,10 @@ def mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, RMM=True):
             w_length = len(word)
             while w_length > 0:
                 if word in wordsdict1:
-                    synonym = wordsdict1.get(word)
-                    result_s += "#" + synonym + "," + str(wordsdict2.get(synonym)) + "/"
+                    result_s += "@" + word + "," + str(wordsdict1.get(word)) + "/"
                     sentence = sentence[w_length:]
                     break
-                elif word in wordsdict2:
-                    result_s += "@" + word + "," + str(wordsdict2.get(word)) + "/"
-                    sentence = sentence[w_length:]
-                    break
-                elif word in wordsdict3 or w_length == 1:
+                elif word in wordsdict2 or w_length == 1:
                     result_s += word + "/"
                     sentence = sentence[w_length:]
                     break
@@ -78,12 +61,7 @@ def mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, RMM=True):
             w_length = len(word)
             while w_length > 0:
                 if word in wordsdict1:
-                    synonym = wordsdict1.get(word)
-                    result_s = "#" + synonym + "," + str(wordsdict2.get(synonym)) + "/" + result_s
-                    sentence = sentence[:s_length - w_length]
-                    break
-                elif word in wordsdict2:
-                    result_s = "@" + word + "," + str(wordsdict2.get(word)) + "/" + result_s
+                    result_s = "@" + word + "," + str(wordsdict1.get(word)) + "/" + result_s
                     sentence = sentence[:s_length - w_length]
                     break
                 elif word in wordsdict2 or w_length == 1:
@@ -97,9 +75,8 @@ def mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, RMM=True):
     return result_s
 
 
-wordsdict1 = gen_dict1("app/dict/synonym.dict")
-wordsdict2 = gen_dict2("app/dict/keyword.dict")
-wordsdict3 = gen_dict("app/dict/dict.txt")
+keyworddict = gen_keyword_dict("app/dict/keyword.dict")
+wordsdict = gen_dict("app/dict/dict.txt")
 
 
 @app.route('/segment', methods=['GET', 'POST'])
@@ -107,8 +84,8 @@ wordsdict3 = gen_dict("app/dict/dict.txt")
 def segment():
     if request.method == 'POST':
         sentence = request.form.get('sentence')
-        fmm = ''.join(mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, RMM=False))
-        rmm = ''.join(mmcut(sentence, wordsdict1, wordsdict2, wordsdict3, ))
+        fmm = ''.join(mmcut(sentence, keyworddict, wordsdict, RMM=False))
+        rmm = ''.join(mmcut(sentence, keyworddict, wordsdict))
         hmm = ''.join(hmmseg.cut(sentence))
         mmseg = []
         words = Analysis(sentence)

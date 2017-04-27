@@ -8,7 +8,20 @@ from .segment import *
 from lxml import etree
 
 
-def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
+def gen_dict_synonym(dictfile):
+    print("Building dictionary...")
+    dictionary = {}
+    with open(dictfile, "r", encoding='utf-8') as f:
+        for line in f:
+            word, item = line.strip().lower().split(',')
+            if item != 'Item':
+                dictionary[word] = item
+    f.close()
+    print("The volumn of dictionary: %d" % (len(dictionary)))
+    return dictionary
+
+
+def fmmcut(sentence, wordsdict1, wordsdict2, FMM = True):
     result_s = []
     sentence = sentence.lower()
     s_length = len(sentence)
@@ -18,15 +31,15 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
             w_length = len(word)
             while w_length > 0:
                 if word in wordsdict1:
-                    synonym = wordsdict1.get(word)
-                    result_s.append("@" + synonym + "," + str(wordsdict2.get(synonym)))
+                    result_s.append("@" + word + "," + str(wordsdict1.get(word)))
                     sentence = sentence[w_length:]
                     break
                 elif word in wordsdict2:
-                    result_s.append("@" + word + "," + str(wordsdict2.get(word)))
+                    print("Find a synonym word: ", word)
+                    result_s.append("@" + word + "," + wordsdict2.get(word))
                     sentence = sentence[w_length:]
                     break
-                elif word in wordsdict3 or w_length == 1:
+                elif w_length == 1:
                     result_s.append(word)
                     sentence = sentence[w_length:]
                     break
@@ -40,12 +53,7 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
             w_length = len(word)
             while w_length > 0:
                 if word in wordsdict1:
-                    synonym = wordsdict1.get(word)
-                    result_s.insert(0, ("@" + synonym + "," + str(wordsdict2.get(synonym))))
-                    sentence = sentence[:s_length - w_length]
-                    break
-                elif word in wordsdict2:
-                    result_s.insert(0, ("@" + word + "," + str(wordsdict2.get(word))))
+                    result_s.insert(0, ("@" + word + "," + str(wordsdict1.get(word))))
                     sentence = sentence[:s_length - w_length]
                     break
                 elif word in wordsdict2 or w_length == 1:
@@ -125,11 +133,15 @@ def CountPoint(dict_seg):
                 items.pop(-1)
                 for item in items:
                     if dict_keyword.get(item):
-                        max += float(dict_keyword.get(item))
-                    if dict_seg.get(item):
-                        match += float(dict_keyword.get(item))
+                        kw_point = float(dict_keyword.get(item))
                     else:
-                        unmatch += float(dict_keyword.get(item)) * 0.3
+                        kw_point = 0.2
+                    if dict_keyword.get(item):
+                        max += kw_point
+                    if dict_seg.get(item):
+                        match += kw_point
+                    else:
+                        unmatch += kw_point * 0.3
             if max != 0.0:
                 point = (match - unmatch) / max
                 if point > 0.8:
@@ -143,6 +155,8 @@ def CountPoint(dict_seg):
         print('Best ID & point:', best_id, best)
     return best_id, best
 
+keyworddict = gen_keyword_dict("app/dict/keyword.dict")
+dict_synonym = gen_dict_synonym("app/dict/synonym.dict")
 
 @app.route('/qa', methods=['GET', 'POST'])
 @app.route('/qa/', methods=['GET', 'POST'])
@@ -150,7 +164,7 @@ def qa():
     if request.method == 'POST':
         question = request.form.get('question')
         dict_seg = {}
-        fmm1 = fmmcut(question, wordsdict1, wordsdict2, wordsdict3)
+        fmm1 = fmmcut(question, keyworddict, dict_synonym)
         print(fmm1)
         for word in fmm1:
             if '@' in word:

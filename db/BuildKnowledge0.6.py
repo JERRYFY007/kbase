@@ -60,8 +60,8 @@ for knowledge in root:
         else:	# 处理标准问题及标准答案
             qa_data.append(field.text.strip())
     ex_no += ex_id
-    que_data.append(str(qa_id) + ',' + qa_data[0] + '\n')
-    ans_data.append(str(qa_id) + ',' + qa_data[1] + '\n')
+#    que_data.append(str(qa_id) + ',' + qa_data[0] + '\n')
+#    ans_data.append(str(qa_id) + ',' + qa_data[1] + '\n')
 print("Process QA: ", qa_id)
 print("Process Extend: ", ex_no)
 print("Process Keyword: ", kw_no)

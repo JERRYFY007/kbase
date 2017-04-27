@@ -12,10 +12,12 @@ tree = etree.parse(xml_filename1)
 root = tree.getroot()
 
 que_data, ans_data, branch = [], [], []
-extend_item = ['qa_ex_id,Item,canOmit,synonym']
+extend_item = ['qa_ex_id,Item,synonym']
 extend_point = ['qa_ex_id,max,match,unmatch,best']
 dict_extend = ['qa_ex_id,Item']
 dict_extend_synonym = ['qa_ex_id,Item']
+df_extend_synonym = ['qa_ex_id,Item,synonym']
+dict_synonym = ['synonym,Item']
 qa_id = 0
 ex_no, kw_no, sy_no = 0, 0, 0
 
@@ -36,19 +38,21 @@ for knowledge in root:
                 kw_id += 1
                 for keyword in item:
                     row_data.append(keyword.text.strip())  # 循环读取extend数据至临时列表
-                sy_no += len(row_data) - 2  # 统计局部同义词数量
-                if len(row_data) == 2:  # 无局部同义词的处理
-                    extend_item.append('\n' + qa_ex + ',' + row_data[0].lower() + ',' + row_data[1].lower())
+                sy_no += len(row_data) - 1  # 统计局部同义词数量
+                if len(row_data) == 1:  # 无局部同义词的处理
+                    extend_item.append('\n' + qa_ex + ',' + row_data[0].lower())
                     extend.append(row_data[0].lower() + ';')
                     extend_synonym.append(row_data[0].lower() + ';')
                 else:  # 有局部同义词的处理
                     extend_synonym.append(row_data[0].lower()) # 局部同义词列表
-                    while len(row_data) >= 3:  # 多个局部同义词循环处理
-                        extend_item.append('\n' + qa_ex + ',' + row_data[0].lower() + ',' + row_data[1].lower() + ',')
-                        extend_item.append(row_data[-1].lower())
-                        extend.append(row_data[-1].lower() + ';')
-                        extend_synonym.append('|' + row_data[-1].lower())
-                        row_data.pop(-1)  # 去掉局部同义词列表最后一个
+                    while len(row_data) >= 2:  # 多个局部同义词循环处理
+                        extend_item.append('\n' + qa_ex + ',' + row_data[0].lower() + ',')
+                        extend_item.append(row_data[1].lower())
+                        extend.append(row_data[1].lower() + ';')
+                        extend_synonym.append('|' + row_data[1].lower())
+                        df_extend_synonym.append('\n' + qa_ex + ',' + row_data[0].lower() + '|' + row_data[1].lower())
+                        dict_synonym.append('\n' + row_data[1].lower() + ',' + row_data[0].lower())
+                        row_data.pop(1)  # 去掉局部同义词列表最后一个
                     extend_synonym.append(';')
             if extend:  # 处理扩展问题
                 dict_extend.append('\n' + qa_ex + ',')
@@ -76,4 +80,6 @@ open('extend_item.df', 'w', encoding='utf8').writelines(extend_item)
 open('extend_point.df', 'w', encoding='utf8').writelines(extend_point)
 open('extend_item.dict', 'w', encoding='utf8').writelines(dict_extend)
 open('extend_item_sy.dict', 'w', encoding='utf8').writelines(dict_extend_synonym)
+open('synonym.df', 'w', encoding='utf8').writelines(df_extend_synonym)
+open('synonym.dict', 'w', encoding='utf8').writelines(dict_synonym)
 print("Knowledge.xml 文件建立完成! (question & answer & branch & extend_item.df & extend_point.df)")
