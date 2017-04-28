@@ -115,7 +115,7 @@ def get_qa(items):
     for j in range(max5):
         qa_id = items[j]
         if int(qa_id) in dict_question:
-            print("Find question & answer!")
+            # print("Find question & answer!")
             question.append(dict_question.get(int(qa_id)))
             answer.append(dict_answer.get(int(qa_id)))
             branch.append(dict_branch.get(qa_id))
@@ -163,9 +163,10 @@ dict_synonym = gen_dict_synonym("app/dict/synonym.dict")
 def qa():
     if request.method == 'POST':
         question = request.form.get('question')
+        app.logger.info("Question: %s", question)
         dict_seg = {}
         fmm1 = fmmcut(question, keyworddict, dict_synonym)
-        print(fmm1)
+        app.logger.info("Question Segmation: %s", fmm1)
         for word in fmm1:
             if '@' in word:
                 word, importance = word.strip().split(',')
@@ -174,9 +175,8 @@ def qa():
         print(dict_seg)
         best_id, best_point = CountPoint(dict_seg)
         question, answer, branch = get_qa(best_id)
-        print(best_id)
-        print(best_point)
-        print(question)
-        print(answer)
+        app.logger.info("Best id & point: %s %s", best_id, best_point)
+        app.logger.info("Best Question: %s", question)
+        app.logger.info("Best Answer: %s", answer)
         return render_template('qa.html', qa = True, ids = best_id, points = best_point, questions = question, answers = answer, )
     return render_template('qa.html',)

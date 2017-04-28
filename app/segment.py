@@ -84,15 +84,18 @@ wordsdict = gen_dict("app/dict/dict.txt")
 def segment():
     if request.method == 'POST':
         sentence = request.form.get('sentence')
+        app.logger.info("Sentense: %s", sentence)
         fmm = ''.join(mmcut(sentence, keyworddict, wordsdict, RMM=False))
         rmm = ''.join(mmcut(sentence, keyworddict, wordsdict))
         hmm = ''.join(hmmseg.cut(sentence))
         mmseg = []
         words = Analysis(sentence)
         for word in words:
-            print(word)
             mmseg.append(word)
-        print(mmseg)
+        app.logger.info("FMM: %s", fmm)
+        app.logger.info("RMM: %s", rmm)
+        app.logger.info("HMM: %s", hmm)
+        app.logger.info("MMSEG: %s", mmseg)
         segmented = []
         segmented.append('FMM: ')
         segmented.append(fmm)
