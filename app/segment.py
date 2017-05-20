@@ -25,58 +25,96 @@ def gen_keyword_dict(dictfile):
 def gen_dict(dictfile):
     print("Building dictionary...")
     dictionary_seg = {}
+    words = []
     with open(dictfile, "r", encoding='utf-8') as f:
         for line in f:
-            word, freq, _ = line.strip().split()
-            dictionary_seg[word] = int(freq)
+            words = line.strip().split()
+            dictionary_seg[words[0]] = int(words[1])
     f.close()
     print("The volumn of dictionary: %d" % (len(dictionary_seg)))
     return dictionary_seg
 
 
+# 判断是否是ASCII码
+def isASCIIChar(ch):
+    import string
+    if ch in string.whitespace:
+        return False
+    if ch in string.punctuation:
+        return False
+    return ch in string.printable
+
+
 def mmcut(sentence, wordsdict1, wordsdict2, RMM=True):
-    sentence = sentence.lower()
+    sentence = sentence.strip()
     result_s = ""
     s_length = len(sentence)
+    english_word = ""
     if not RMM:
+        result_s = "["
         while s_length > 0:
             word = sentence
             w_length = len(word)
             while w_length > 0:
-                if word in wordsdict1:
-                    result_s += "@" + word + "," + str(wordsdict1.get(word)) + "/"
+                if isASCIIChar(word[0]):
+                    english_word = english_word + str(word[0])
+                    word = word[1:]
+                    sentence = sentence[1:]
+                    w_length = len(word)
+                    break
+                elif english_word:
+                    result_s += english_word + "]["
+                    english_word = ""
+                    break
+                elif word in wordsdict1:
+                    result_s += "@" + word + "," + str(wordsdict1.get(word)) + "]["
                     sentence = sentence[w_length:]
                     break
                 elif word in wordsdict2 or w_length == 1:
-                    result_s += word + "/"
+                    result_s += word + "]["
                     sentence = sentence[w_length:]
                     break
                 else:
                     word = word[:w_length - 1]
                 w_length = w_length - 1
             s_length = len(sentence)
+        result_s = result_s[:-1]
     else:
+        result_s = "]"
         while s_length > 0:
             word = sentence
             w_length = len(word)
             while w_length > 0:
-                if word in wordsdict1:
-                    result_s = "@" + word + "," + str(wordsdict1.get(word)) + "/" + result_s
+                if w_length >0 and isASCIIChar(word[w_length - 1]):
+                    # print(word[w_length - 1])
+                    english_word = str(word[w_length - 1]) + english_word
+                    sentence = sentence[:s_length - 1]
+                    w_length -= 1
+                    s_length -= 1
+                    break
+                if english_word:
+                    # print(english_word)
+                    result_s = english_word + "][" + result_s
+                    english_word = ""
+                    break
+                elif word in wordsdict1:
+                    result_s = "@" + word + "," + str(wordsdict1.get(word)) + "][" + result_s
                     sentence = sentence[:s_length - w_length]
                     break
                 elif word in wordsdict2 or w_length == 1:
-                    result_s = word + "/" + result_s
+                    result_s = word + "][" + result_s
                     sentence = sentence[:s_length - w_length]
                     break
                 else:
                     word = word[1:]
                 w_length = w_length - 1
             s_length = len(sentence)
+        result_s = "[" + result_s[:-2]
     return result_s
 
 
 keyworddict = gen_keyword_dict("app/dict/keyword.dict")
-wordsdict = gen_dict("app/dict/dict.txt")
+wordsdict = gen_dict("app/dict/sogou.dic_utf8")
 
 
 @app.route('/segment', methods=['GET', 'POST'])
