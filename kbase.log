@@ -8389,3 +8389,5 @@ ValueError: max() arg is an empty sequence
 2017-05-21 00:01:58,318 INFO: RMM: [定义][eip][看到][@人,0.6][资][@有,0.2][待办][但是][@登录,1.2][@系统,1.2][@看不到,1.2][待办][（][IE8][浏览器][）] [in D:\PycharmProjects\kbase\app\segment.py:134]
 2017-05-21 00:01:58,319 INFO: HMM: HGIS/定义/eip/看到/人资/有/待/办/但/是/登录/系统/看/不/到/待/办/（/IE8/浏览器/） [in D:\PycharmProjects\kbase\app\segment.py:135]
 2017-05-21 00:01:58,319 INFO: MMSEG: ['HGIS/', '定义/', 'eip/', '看到/人/资/', '有/待办/但是/', '登录/系统/看不到/', '待办/', 'IE8/', '浏览器/', '/'] [in D:\PycharmProjects\kbase\app\segment.py:136]
+2017-05-21 09:54:04,722 INFO: KBase startup [in D:\PycharmProjects\kbase\app\__init__.py:15]
+2017-05-21 09:54:06,847 INFO: KBase startup [in D:\PycharmProjects\kbase\app\__init__.py:15]
