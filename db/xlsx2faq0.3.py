@@ -24,8 +24,8 @@ for row in range(booksheet.nrows):
         row_data.append(val)
     print(row_data, row_data[0], row_data[1], row_data[2])
     if row_data[0] != "":
-        qa_id = qa_id + 1
         faq_data.append(str(qa_id) + row_data[0] + "\n")
+        qa_id = qa_id + 1
 
 open('IT_Q.txt', 'w', encoding='utf8').writelines(faq_data)
 print("IT_Q.txt 文件建立完成! Process FAQs: ", qa_id)
