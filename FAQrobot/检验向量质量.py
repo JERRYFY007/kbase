@@ -4,12 +4,12 @@ Spyder Editor
 作者ZL
 This is a temporary script file.
 """
-
 from gensim.models import Word2Vec
 
-#文本文件必须是utf-8无bom格式
-mod = Word2Vec.load(r'C:\Word60.model')	#3个文件放在一起：Word60.model   Word60.model.syn0.npy   Word60.model.syn1neg.npy
-fout = open(r"C:\字词相似度.txt", 'w') 
+# 文本文件必须是utf-8无bom格式
+# 3个文件放在一起：Word60.model   Word60.model.syn0.npy   Word60.model.syn1neg.npy
+mod = Word2Vec.load(r'Word60.model')
+fout = open("字词相似度.txt", 'w')
 
 showWord=['了',
 '不存在的词',
