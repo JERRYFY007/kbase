@@ -52,7 +52,7 @@ class zhishiku():
 
 
 class FAQrobot():
-    def __init__(self, zhishitxt='FAQ_IT.txt', lastTxtLen=10, usedVec=False):
+    def __init__(self, zhishitxt = 'FAQ_IT.txt', lastTxtLen = 20, usedVec = True):
         # usedVec 如果是True 在初始化时会解析词向量，加快计算句子相似度的速度
         self.lastTxt = []  # 记录之前输入的问句，方便调试
         self.lastTxtLen = lastTxtLen  # lastTxt数组的长度上限
@@ -132,7 +132,7 @@ class FAQrobot():
             print('正在载入词向量')
             from gensim.models import Word2Vec
             # 载入60维的词向量(Word60.model，Word60.model.syn0.npy，Word60.model.syn1neg.npy）
-            self.vecModel = Word2Vec.load(pp('D:/NLP-dataset/space/word2vec/word2vec_wx'))
+            self.vecModel = Word2Vec.load(pp('Word60.model'))
             for t in self.zhishiku:
                 t.q_vec = []
                 for question in t.q_word:
@@ -149,7 +149,7 @@ class FAQrobot():
             self.lastTxt.pop(0)
 
     # 找出知识库里的和输入句子相似度最高的句子
-    def maxSimTxt(self, intxt, simCondision=0.1, simType='simple'):  # simType=simple, simple_POS, vec
+    def maxSimTxt(self, intxt, simCondision=0.1, simType='vec'):  # simType=simple, simple_POS, vec
         self.intolastTxt(intxt)
         for t in self.zhishiku:
             simList = []
@@ -192,9 +192,9 @@ class FAQrobot():
         return simWeight / len(intxtSet)
 
     # simple_POS: 简单的对比相同词汇数量,并对词性乘以不同的权重，得到句子相似度
-    def juziSim_simple_POS(self, intxt, questionWordset, posWeight=None):  # juziIn输入的句子，juziLi句子库里的句子
+    def juziSim_simple_POS(self, intxt, questionWordset, posWeight = None):  # juziIn输入的句子，juziLi句子库里的句子
         # print("intxt:", intxt)
-        print("questionWordset:", questionWordset )
+        # print("questionWordset:", questionWordset )
         if posWeight == None:
             posWeight = self.posWeight
         intxtSet = set(pseg.cut(intxt))
