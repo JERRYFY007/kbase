@@ -6,11 +6,22 @@ from flask import render_template, request
 from app import *
 from .segment import *
 from lxml import etree
-import pandas as pd
-from pandas.io.parsers import read_csv
 
 
-def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
+def gen_dict_synonym(dictfile):
+    print("Building dictionary...")
+    dictionary = {}
+    with open(dictfile, "r", encoding='utf-8') as f:
+        for line in f:
+            word, item = line.strip().lower().split(',')
+            if item != 'Item':
+                dictionary[word] = item
+    f.close()
+    print("The volumn of dictionary: %d" % (len(dictionary)))
+    return dictionary
+
+
+def fmmcut(sentence, wordsdict1, wordsdict2, FMM = True):
     result_s = []
     sentence = sentence.lower()
     s_length = len(sentence)
@@ -20,15 +31,15 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
             w_length = len(word)
             while w_length > 0:
                 if word in wordsdict1:
-                    synonym = wordsdict1.get(word)
-                    result_s.append("@" + synonym + "," + str(wordsdict2.get(synonym)))
+                    result_s.append("@" + word + "," + str(wordsdict1.get(word)))
                     sentence = sentence[w_length:]
                     break
                 elif word in wordsdict2:
-                    result_s.append("@" + word + "," + str(wordsdict2.get(word)))
+                    print("Find a synonym word: ", word)
+                    result_s.append("@" + word + "," + wordsdict2.get(word))
                     sentence = sentence[w_length:]
                     break
-                elif word in wordsdict3 or w_length == 1:
+                elif w_length == 1:
                     result_s.append(word)
                     sentence = sentence[w_length:]
                     break
@@ -42,12 +53,7 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
             w_length = len(word)
             while w_length > 0:
                 if word in wordsdict1:
-                    synonym = wordsdict1.get(word)
-                    result_s.insert(0, ("@" + synonym + "," + str(wordsdict2.get(synonym))))
-                    sentence = sentence[:s_length - w_length]
-                    break
-                elif word in wordsdict2:
-                    result_s.insert(0, ("@" + word + "," + str(wordsdict2.get(word))))
+                    result_s.insert(0, ("@" + word + "," + str(wordsdict1.get(word))))
                     sentence = sentence[:s_length - w_length]
                     break
                 elif word in wordsdict2 or w_length == 1:
@@ -61,158 +67,116 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
     return result_s
 
 
-def load_dataframe(xml_filename):
-    print("Building  Extend & Keyword Dataframe...")
-
-    # Process knowledge.xml
-    tree = etree.parse(xml_filename)
-    root = tree.getroot()
-    extends = {}
-    qa_ex, items, local_synonym = [], [], []
-    keyword_value, importance, global_synonym = [], [], []
-    qa_id, ex_no, kw_no, sy_no = 0, 0, 0, 0
-    for knowledge in root:
-        qa_id = qa_id + 1
-        ex_id = 0
-        for field in knowledge:
-            if field.text is None:
-                ex_id = ex_id + 1
-                kw_id = 0
-                qa_ex_id = str(qa_id) + ':' + str(ex_id)
-                for item in field:
-                    row_data = []
-                    kw_id += 1
-                    for keyword in item:
-                        row_data.append(keyword.text.strip())
-                    sy_no += len(row_data) - 2
-                    if len(row_data) == 2:
-                        qa_ex.append(qa_ex_id)
-                        items.append(row_data[0].lower())
-                        local_synonym.append('')
-                    elif len(row_data) >= 3:
-                        qa_ex.append(qa_ex_id)
-                        items.append(row_data[0].lower())
-                        local_synonym.append(row_data[-1])
-                kw_no += kw_id
-    extends['qa_id:ex_id'] = qa_ex
-    extends['Item'] = items
-    extends['synonym'] = local_synonym
-    df_extend = pd.DataFrame(extends)
-    df_keyword = read_csv("app/dict/keyword.dict", encoding='utf8')
-    df_extend = pd.merge(df_extend, df_keyword, how='left', on='Item')
-    print("The volumn of Extend & Keyword Dataframe:", len(df_extend), len(df_keyword))
-    return df_extend, df_keyword
+def load_dataframe():
+    dict_keyword = {}
+    with open("app/dict/keyword.dict", encoding='utf8') as f:
+        for line in f:
+            (val, imp) = line.strip().split(',')
+            dict_keyword[val] = imp
+    dict_extend_item = {}
+    with open("app/dict/extend_item.dict", encoding='utf8') as f:
+        for line in f:
+            (qa_ex_id, item) = line.strip().split(',')
+            dict_extend_item[qa_ex_id] = item
+    return dict_keyword, dict_extend_item
 
 
 def load_qa(xml_filename):
-    print("Building Question & Answer Dict...")
+    print("Building Question, Answer, Branch Dict...")
     # Process knowledge.xml
     tree = etree.parse(xml_filename)
     root = tree.getroot()
-    dict_question, dict_answer = {}, {}
+    dict_question, dict_answer, dict_branch = {}, {}, {}
     qa_id = 0
     for knowledge in root:
         qa_id = qa_id + 1
-        qa_data = []
+        br_id = 0
         for field in knowledge:
-            if field.text is None:
-                continue
-            else:
-                qa_data.append(field.text.strip())
-        dict_question[qa_id] = qa_data[0]
-        dict_answer[qa_id] = qa_data[1]
+            if field.tag == "question":
+                dict_question[qa_id] = field.text
+            if field.tag == "answer":
+                dict_answer[qa_id] = field.text
+            if field.tag == "branch":
+                br_id += 1
+                dict_branch[str(qa_id) + ':' + str(br_id)] = field.text
     print("The volumn of Question & Answer Dict:", len(dict_question), len(dict_answer))
-    return dict_question, dict_answer
+    return dict_question, dict_answer, dict_branch
+
+dict_keyword, dict_extend_item = load_dataframe()
+dict_question, dict_answer, dict_branch= load_qa("app/dict/knowledge.xml")
 
 
-def countPoint(df_extend, df_seg):
-    best, match, unmatch = 0.0, 0.0, 0.0   # 最佳分，最高分，匹配分，不匹配分
-    point = 0.0   # 当前分
-    print("df_seg in def", df_seg)
-    # df_extend = pd.merge(df_extend, df_keyword, how='left', on='Item')
-    df = pd.merge(df_extend, df_seg, how='left', on='Item')
-    df_qa_ex = pd.merge(df_extend, df_seg, how='right', on='Item')
-
-    dict_qa_point = {}
-    for qa in df_qa_ex['qa_id:ex_id']:
-        df_qa = df.loc[df['qa_id:ex_id'] == qa,]
-        dict_qa_point[qa] = df_qa['im'].sum() * 2 - df_qa['importance'].sum()
-
-    print(len(dict_qa_point))
-    for k, v in dict_qa_point.items():
-        if v > 1:
-            print(k, v)
-
-    match_id = []
-    match = max(dict_qa_point, key=dict_qa_point.get)
-    match_id.append(match)
-    print("MAX1: ", match, dict_qa_point[match])
-    dict_qa_point.pop(match)
-    match = max(dict_qa_point, key=dict_qa_point.get)
-    match_id.append(match)
-    print("MAX2: ", match, dict_qa_point[match])
-    dict_qa_point.pop(match)
-    match = max(dict_qa_point, key=dict_qa_point.get)
-    match_id.append(match)
-    print("MAX3: ", match, dict_qa_point[match])
-    dict_qa_point.pop(match)
-    match = max(dict_qa_point, key=dict_qa_point.get)
-    match_id.append(match)
-    print("MAX4: ", match, dict_qa_point[match])
-    print(match_id)
-    return match_id
-
-
-def get_qa(dict_question, dict_answers, items):
-    questions, answers = [], []
-    i = 0
-    for item in items:
-        qa_id, ex_id = item.strip().split(':')
-        print(qa_id, ex_id)
+def get_qa(items):
+    question, answer, branch = [], [], []
+    if len(items) > 4:
+        max5 = 4
+    else:
+        max5 = len(items)
+    for j in range(max5):
+        qa_id = items[j]
         if int(qa_id) in dict_question:
-            print("Find question & answer!", i)
-            i += 1
-            questions.append(str(i) + ':' + dict_question.get(int(qa_id)))
-            answers.append(str(i) + ':' + dict_answers.get(int(qa_id)))
-    return questions, answers
-
-df_extend, df_keyword = load_dataframe("app/dict/knowledge.xml")
-dict_question, dict_answer = load_qa("app/dict/knowledge.xml")
+            # print("Find question & answer!")
+            question.append(dict_question.get(int(qa_id)))
+            answer.append(dict_answer.get(int(qa_id)))
+            branch.append(dict_branch.get(qa_id))
+    return question, answer, branch
 
 
-def CountPoint():
-    max =0
+def CountPoint(dict_seg):
+    with open("app/dict/extend_point.df", encoding='utf8') as f:
+        best_id, best = [''], [0.0]
+        for line in f:
+            (qa_ex_id, _, _, _, _) = line.strip().split(',')
+            point, max, match, unmatch = 0.0, 0.0, 0.0, 0.0
+            if dict_extend_item.get(qa_ex_id) and (dict_extend_item.get(qa_ex_id) != 'Item'):
+                items = dict_extend_item.get(qa_ex_id).split(';')
+                items.pop(-1)
+                for item in items:
+                    if dict_keyword.get(item):
+                        kw_point = float(dict_keyword.get(item))
+                    else:
+                        kw_point = 0.2
+                    if dict_keyword.get(item):
+                        max += kw_point
+                    if dict_seg.get(item):
+                        match += kw_point
+                    else:
+                        unmatch += kw_point * 0.3
+            if max != 0.0:
+                point = (match - unmatch) / max
+                if point > 0.8:
+                    print(qa_ex_id, match, unmatch, max, point)
+                if point >= best[0]:
+                    (qa_id, _) = qa_ex_id.split(':')
+                    best.insert(0, point)
+                    best_id.insert(0, qa_id)
+        best.pop(-1)
+        best_id.pop(-1)
+        print('Best ID & point:', best_id, best)
+    return best_id, best
 
-    return
+keyworddict = gen_keyword_dict("app/dict/keyword.dict")
+dict_synonym = gen_dict_synonym("app/dict/synonym.dict")
 
 @app.route('/qa', methods=['GET', 'POST'])
 @app.route('/qa/', methods=['GET', 'POST'])
 def qa():
     if request.method == 'POST':
         question = request.form.get('question')
-        answer = {}
-        best_question, best_answer = [], []
-        items = []
-
-        fmm1 = fmmcut(question, wordsdict1, wordsdict2, wordsdict3)
-        print(fmm1)
-        # answer.append('Item,im')
-        item, im = [], []
+        app.logger.info("Question: %s", question)
+        dict_seg = {}
+        fmm1 = fmmcut(question, keyworddict, dict_synonym)
+        app.logger.info("Question Segmation: %s", fmm1)
         for word in fmm1:
             if '@' in word:
                 word, importance = word.strip().split(',')
                 _, word = word.strip().split('@')
-                # print(word, importance)
-                item.append(word)
-                im.append(float(importance))
-        answer['Item'] = item
-        answer['im'] = im
-        # print(answer, item, im)
-        df_seg = pd.DataFrame(answer)
-        print(df_seg)
-        items = countPoint(df_extend, df_seg)
-        print(items)
-        best_question, best_answer = get_qa(dict_question, dict_answer, items)
-        print(best_question, best_answer)
-        return render_template('qa.html', qa = True, questions = best_question, answers = best_answer, )
+                dict_seg[word] = float(importance)
+        print(dict_seg)
+        best_id, best_point = CountPoint(dict_seg)
+        question, answer, branch = get_qa(best_id)
+        app.logger.info("Best id & point: %s %s", best_id, best_point)
+        app.logger.info("Best Question: %s", question)
+        app.logger.info("Best Answer: %s", answer)
+        return render_template('qa.html', qa = True, ids = best_id, points = best_point, questions = question, answers = answer, )
     return render_template('qa.html',)

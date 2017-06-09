@@ -1,7 +1,9 @@
 # -*- coding:utf-8 -*-
 # @author:Eric Luo
-# @file:dialog.py
-# @time:2017/4/10 0010 16:04
+# @file:qa.py
+# @time:2017/6/8
+#
+#  知识库局部同义词的处理
 from flask import render_template, request
 from app import *
 from .segment import *
@@ -34,11 +36,12 @@ def fmmcut(sentence, wordsdict1, wordsdict2, FMM = True):
                     result_s.append("@" + word + "," + str(wordsdict1.get(word)))
                     sentence = sentence[w_length:]
                     break
-                elif word in wordsdict2:
-                    print("Find a synonym word: ", word)
-                    result_s.append("@" + word + "," + wordsdict2.get(word))
-                    sentence = sentence[w_length:]
-                    break
+                # 不需要处理非关键词
+                # elif word in wordsdict2:
+                #    print("Find a synonym word: ", word)
+                #    result_s.append("@" + word + "," + wordsdict2.get(word))
+                #    sentence = sentence[w_length:]
+                #    break
                 elif w_length == 1:
                     result_s.append(word)
                     sentence = sentence[w_length:]

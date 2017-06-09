@@ -1,8 +1,8 @@
 # KBase 客服知识库维护工具
 
-> 使用python语言、flask web框架、 SQLite3数据库等技术编写
+> 使用python语言、flask web框架等技术编写
 
-> 需要flask、sqlite3、flask_paginate、xlrd、xlsxwriter等库支持
+> 需要flask、flask_paginate、xlrd、xlsxwriter等库支持
 
 ### 目前实现以下功能：
 - 浏览标准问题及标准答案
