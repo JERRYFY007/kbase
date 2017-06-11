@@ -16,16 +16,21 @@
 
 {% if qa %}
 	<dl class="dl-horizontal col-md-6 col-md-offset-1">
-		{% for n in range(4) %}
-		<dt> ID: </dt>
-		<dd> {{ ids[n] }} </dd>
-		<dt> Point: </dt>
-		<dd> {{ points[n] }} </dd>
-		<dt> Question: </dt>
-		<dd> {{ questions[n] }} </dd>
-		<dt> Answer: </dt>
-        <dd> {{ answers[n] }} </dd>
+		<dt> 用户问题： </dt>
+		<dd> {{ question }} </dd>
 		<br>
+		{% for n in range(4) %}
+			{% if ids[n] %}
+			<dt> ID: </dt>
+			<dd> {{ ids[n] }} </dd>
+			<dt> Point: </dt>
+			<dd> {{ points[n] }} </dd>
+			<dt> Question: </dt>
+			<dd> {{ questions[n] }} </dd>
+			<dt> Answer: </dt>
+			<dd> {{ answers[n] }} </dd>
+			<br>
+			{% endif %}
 		{% endfor %}
     </dl>
 {% endif %}

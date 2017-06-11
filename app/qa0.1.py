@@ -10,49 +10,33 @@ from .segment import *
 from lxml import etree
 
 
-def load_dataframe():
-    print("Building keywords dictionary...")
-    dict_keyword = {}
-    with open("app/dict/keyword.dict", encoding='utf8') as f:
-        for line in f:
-            (val, imp) = line.strip().split(',')
-            dict_keyword[val] = imp
-    print("Dict Keyword:", len(dict_keyword))
-
-    print("Building local synonym dictionary...")
-    dict_synonym = {}
-    with open("app/dict/extend.dict", encoding='utf8') as f:
+def gen_dict_synonym(dictfile):
+    print("Building dictionary...")
+    dictionary = {}
+    with open(dictfile, "r", encoding='utf-8') as f:
         for line in f:
             word, item = line.strip().lower().split(',')
             if item != 'Item':
-                dict_synonym[word] = item
-    print("Dict local synonym: %d" % (len(dict_synonym)))
+                dictionary[word] = item
+    f.close()
+    print("The volumn of global synonym dictionary: %d" % (len(dictionary)))
+    return dictionary
 
-    print("Building extends dictionary...")
-    dict_extend = {}
-    with open("app/dict/extend.dict", encoding='utf8') as f:
+
+def gen_dict_local_synonym(dictfile):
+    print("Building dictionary...")
+    dictionary = {}
+    with open(dictfile, "r", encoding='utf-8') as f:
         for line in f:
-            dict_item = {}
-            (qa_ex_id, item) = line.strip().split(',')
-            if item == "Item":
-                continue
-            # print(qa_ex_id, item)
-            items = item.split(';')
-            items.pop(-1)
-            # print(items)
-            sy = []
-            for keyword in items:
-                # print(keyword)
-                sy.append(keyword.split('|'))
-                dict_item[keyword] = sy
-            # print("Extend:", sy)
-            dict_extend[qa_ex_id] = sy
-    print("Dict extend: ", len(dict_extend))
-
-    return dict_keyword, dict_synonym, dict_extend
+            word, item = line.strip().lower().split(',')
+            if item != 'Item':
+                dictionary[word] = item
+    f.close()
+    print("The volumn of loacal synonym dictionary: %d" % (len(dictionary)))
+    return dictionary
 
 
-def fmmcut(sentence, dict_kw, dict_local_sy, FMM = True):
+def fmmcut(sentence, dict_kw, dict_global_sy, dict_local_sy, FMM = True):
     result_s = []
     sentence = sentence.lower()
     s_length = len(sentence)
@@ -63,6 +47,12 @@ def fmmcut(sentence, dict_kw, dict_local_sy, FMM = True):
             while w_length > 0:
                 if word in dict_kw:
                     result_s.append("@" + word + "," + str(dict_kw.get(word)))
+                    sentence = sentence[w_length:]
+                    break
+                # 处理global synonym word
+                elif word in dict_global_sy:
+                    print("Find a global synonym word: ", word)
+                    result_s.append("@" + dict_global_sy.get(word) +  ',' + str(dict_kw.get(word)))
                     sentence = sentence[w_length:]
                     break
                 # 处理local synonym word
@@ -88,7 +78,7 @@ def fmmcut(sentence, dict_kw, dict_local_sy, FMM = True):
                     result_s.insert(0, ("@" + word + "," + str(dict_kw.get(word))))
                     sentence = sentence[:s_length - w_length]
                     break
-                elif word in dict_local_sy or w_length == 1:
+                elif word in dict_global_sy or w_length == 1:
                     result_s.insert(0, word)
                     sentence = sentence[:s_length - w_length]
                     break
@@ -97,6 +87,20 @@ def fmmcut(sentence, dict_kw, dict_local_sy, FMM = True):
                 w_length = w_length - 1
             s_length = len(sentence)
     return result_s
+
+
+def load_dataframe():
+    dict_keyword = {}
+    with open("app/dict/keyword.dict", encoding='utf8') as f:
+        for line in f:
+            (val, imp) = line.strip().split(',')
+            dict_keyword[val] = imp
+    dict_extend_item = {}
+    with open("app/dict/extend_item.dict", encoding='utf8') as f:
+        for line in f:
+            (qa_ex_id, item) = line.strip().split(',')
+            dict_extend_item[qa_ex_id] = item
+    return dict_keyword, dict_extend_item
 
 
 def load_qa(xml_filename):
@@ -117,8 +121,11 @@ def load_qa(xml_filename):
             if field.tag == "branch":
                 br_id += 1
                 dict_branch[str(qa_id) + ':' + str(br_id)] = field.text
-    print("The volumn of Question, Answer, Branch Dict:", len(dict_question), len(dict_answer), len(dict_branch))
+    print("The volumn of Question & Answer Dict:", len(dict_question), len(dict_answer))
     return dict_question, dict_answer, dict_branch
+
+dict_keyword, dict_extend_item = load_dataframe()
+dict_question, dict_answer, dict_branch= load_qa("app/dict/knowledge.xml")
 
 
 def get_qa(items):
@@ -138,49 +145,33 @@ def get_qa(items):
 
 
 def CountPoint(dict_seg):
-    print(dict_seg)
-    with open("app/dict/extend.dict", encoding='utf8') as f:
+    with open("app/dict/extend_point.df", encoding='utf8') as f:
         best_id, best = [''], [0.0]
         for line in f:
-            (qa_ex_id, extends) = line.strip().split(',')
+            (qa_ex_id, _, _, _, _) = line.strip().split(',')
             point, max, match, unmatch = 0.0, 0.0, 0.0, 0.0
-            extends = extends.strip().split(';')
-            extends.pop(-1)
-            sucess = False
-            for extend in extends:
-                extend.strip().split('|')
-                # print(extend)
-                # if item in dict_seg:
-                for keyword in dict_seg.keys():
-                    kw_point = float(dict_seg.get(keyword))
-                    if keyword in extend:
-                        match += kw_point
-                        sucess = True
-                        # print("Found:", keyword, qa_ex_id, match)
-                        break
-                    '''
-                    # item的局部同义词进行匹配
-                    for sy in dict_synonym:
-                        if sy == keyword:
-                            match += kw_point
-                            sucess = True
-                            break
-                    # 未匹配成功，增加不匹配分
-                '''
-                if not sucess:
-                    unmatch += kw_point * 0.3
-                if dict_seg.get(keyword):
-                    kw_point = float(dict_seg.get(keyword))
-                else:
-                    kw_point = 0.2
-                if dict_seg.get(keyword):
-                    max += kw_point
+            if dict_extend_item.get(qa_ex_id) and (dict_extend_item.get(qa_ex_id) != 'Item'):
+                items = dict_extend_item.get(qa_ex_id).split(';')
+                items.pop(-1)
+                for item in items:
+                    if dict_keyword.get(item):
+                        kw_point = float(dict_keyword.get(item))
+                    else:
+                        kw_point = 0.2
+                    if dict_keyword.get(item):
+                        max += kw_point
+                #for keyword in dict_seg:
+                #    kw_point = float(dict_keyword.get(keyword))
+                #    for item in items:
+                #        if item == keyword:
+                #            match += kw_point
+                #        else:
+                #            unmatch += kw_point * 0.3
             if max != 0.0:
-                # 计算总分
                 point = (match - unmatch) / max
                 if point > 0.8:
+                    print(items)
                     print(qa_ex_id, match, unmatch, max, point)
-                    # 与当前最佳分比较
                     if point >= best[0]:
                         (qa_id, _) = qa_ex_id.split(':')
                         best.insert(0, point)
@@ -190,9 +181,9 @@ def CountPoint(dict_seg):
         print('Best ID & point:', best_id, best)
     return best_id, best
 
-dict_keyword, dict_synonym, dict_extend = load_dataframe()
-dict_question, dict_answer, dict_branch= load_qa("app/dict/knowledge.xml")
-
+dict_keyword = gen_keyword_dict("app/dict/keyword.dict")
+dict_global_synonym = gen_dict_synonym("app/dict/synonym_global.dict")
+dict_local_synonym = gen_dict_synonym("app/dict/synonym_local.dict")
 
 @app.route('/qa', methods=['GET', 'POST'])
 @app.route('/qa/', methods=['GET', 'POST'])
@@ -201,7 +192,7 @@ def qa():
         question = request.form.get('question')
         app.logger.info("Question: %s", question)
         dict_seg = {}
-        fmm1 = fmmcut(question, dict_keyword, dict_synonym)
+        fmm1 = fmmcut(question, dict_keyword, dict_global_synonym, dict_local_synonym)
         app.logger.info("Question Segmation: %s", fmm1)
         for word in fmm1:
             print(word)
