@@ -12,17 +12,20 @@
         </div>
     </div>
 </form>
-<br>
 
 {% if qa %}
-	<dl class="dl-horizontal col-md-6 col-md-offset-1">
+	<dl class="dl-horizontal col-md-8 col-md-offset-0">
 		<dt> 用户问题： </dt>
 		<dd> {{ question }} </dd>
+		<dt> 问题分词： </dt>
+		<dd> {{ seg }} </dd>
 		<br>
 		{% for n in range(4) %}
 			{% if ids[n] %}
 			<dt> ID: </dt>
 			<dd> {{ ids[n] }} </dd>
+			<dt> Extend: </dt>
+			<dd> {{ extend[n] }} </dd>
 			<dt> Point: </dt>
 			<dd> {{ points[n] }} </dd>
 			<dt> Question: </dt>
