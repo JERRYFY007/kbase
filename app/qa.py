@@ -37,25 +37,21 @@ def load_dataframe():
         for line in f:
             dict_item = {}
             (qa_ex_id, item) = line.strip().split(',')
-            if item == "Item":
+            if item == "Extend":
                 continue
-            # print(qa_ex_id, item)
             items = item.split(';')
             items.pop(-1)
-            # print(items)
             sy = []
             for keyword in items:
-                # print(keyword)
                 sy.append(keyword.split('|'))
                 dict_item[keyword] = sy
-            # print("Extend:", sy)
             dict_extend[qa_ex_id] = sy
     print("Dict extend: ", len(dict_extend))
     return dict_keyword, dict_synonym, dict_extend
 
 
 # 问句分词，最大匹配算法，缺省正相匹配
-def fmmcut(sentence, dict_kw, dict_local_sy, FMM = True):
+def fmm_cut(sentence, dict_kw, dict_local_sy, FMM=True):
     result_s = []
     sentence = sentence.lower()
     s_length = len(sentence)
@@ -72,7 +68,7 @@ def fmmcut(sentence, dict_kw, dict_local_sy, FMM = True):
                 # 局部同义词切分
                 elif word in dict_local_sy:
                     print("Find a local synonym word: ", word)
-                    result_s.append("#" +  word + "," + dict_local_sy.get(word))
+                    result_s.append("#" + word + "," + dict_local_sy.get(word))
                     sentence = sentence[w_length:]
                     break
                 # 切分至单字
@@ -84,7 +80,8 @@ def fmmcut(sentence, dict_kw, dict_local_sy, FMM = True):
                     word = word[:w_length - 1]
                 w_length = w_length - 1
             s_length = len(sentence)
-    else:  # 反向最大匹配，暂不使用
+    else:
+        # 反向最大匹配，暂不使用
         while s_length > 0:
             word = sentence
             w_length = len(word)
@@ -142,7 +139,6 @@ def get_qa(items):
             branch.append(dict_branch.get(qa_id))
     return question, answer, branch
 
-
 """
 计算问句分值
 * 算法说明：逐个比较keyword[]与extend.get(i)
@@ -151,58 +147,49 @@ def get_qa(items):
 * 3、计算keyword[]中与extend不重合的关键词，将不重合关键词的分数相加，乘以系数，得到不匹配分
 * 4、总得分 = (匹配分-不匹配分)/最高匹配分
 """
-def CountPoint(dict_seg):
-    best_id, best, best_extend = [''], [0.0], ['']
 
-    with open("app/dict/extend.dict", encoding='utf8') as f:  # 可事先加载问扩展问字典，不用每次都读文件
-        for line in f:
-            (qa_ex_id, extends) = line.strip().split(',')
-            extends = extends.strip().split(';')
-            extends.pop(-1)
 
-            point, max, match, unmatch = 0.0, 0.0, 0.0, 0.0
- 
-            # 计算扩展问的最大分，可事先计算好生成字典文件
-            for extend in extends:
-                max += float(dict_keyword.get(extend.strip().split('|')[0]))
-                # print(qa_ex_id, extend.strip().split('|')[0], dict_keyword.get(extend.strip().split('|')[0]), max)
+def count_point(dict_seg):
+    best_id, best_point, best_extend = [], [0.55], []
 
-            for seg in dict_seg.keys():
-                sucess = False
-                for extend in extends:
-                    items = extend.strip().split('|')
-                    if seg in items:
-                        match += float(dict_keyword.get(items[0]))
-                        sucess = True
-                        # print("Matched:", qa_ex_id, list_seg, seg, seg_point, match)
-                        break
-                if sucess == False:
-                    unmatch += float(dict_keyword.get(seg)) * 0.3
-                    # print("Unmatched:",qa_ex_id, seg, seg_point, unmatch)
+    for qa_ex_id in dict_extend.keys():
+        point, max_point, match, un_match = 0.0, 0.0, 0.0, 0.0
 
-            # print("qa_ex_id, match, unmatch, max:", qa_ex_id, match, unmatch, max)
-            # 计算扩展问的总分point，确定是否最佳
-            if max == 0 or match == 0 or match < unmatch:  # max=0代表空白扩展问；match=0代表全部不匹配；match < unmatch 代表不匹配度太高 
-                continue
-            else:
-                # 计算总分
-                point = (match - unmatch) / max
-                # print("qa_ex_id, point, max, match, unmatch", qa_ex_id, point, max, match, unmatch)
+        # 计算扩展问的最大分，可事先计算好生成字典文件
+        for extend in dict_extend.get(qa_ex_id):
+            max_point += float(dict_keyword.get(extend[0]))
 
-                if point > 0.55:
-                    print("Best qa_ex_id, point, max, match, unmatch", qa_ex_id, point, max, match, unmatch)
-                    # 与当前最佳分比较
-                    if point >= best[0]:
-                        (qa_id, _) = qa_ex_id.split(':')  # 只保留问答对序号，丢弃扩展问序号
-                        # 如果问答对序号不一致才加入最佳答案
-                        if qa_id not in best_id:
-                            best.insert(0, point)
-                            best_id.insert(0, qa_id)
-                            best_extend.insert(0, extends)
-        best.pop(-1)
-        best_id.pop(-1)
-        print('Best ID & point:', best_id, best)
-    return best_id, best, best_extend
+        for seg in dict_seg.keys():
+            success = False
+            for extend in dict_extend.get(qa_ex_id):
+                items = extend
+                if seg in items:
+                    match += float(dict_keyword.get(items[0]))
+                    success = True
+                    break
+            if not success:
+                un_match += float(dict_keyword.get(seg)) * 0.3
+
+        # 计算扩展问的总分point，确定是否最佳
+        if max == 0 or match == 0 or match < un_match:  # max=0代表空白扩展问；match=0代表全部不匹配；match < unmatch 代表不匹配度太高
+            continue
+        else:
+            # 计算总分
+            point = (match - un_match) / max_point
+            # print("qa_ex_id, point, max, match, unmatch", qa_ex_id, point, max, match, unmatch)
+
+            # 与当前最佳分比较
+            if point >= best_point[0]:
+                (qa_id, _) = qa_ex_id.split(':')  # 只保留问答对序号，丢弃扩展问序号
+                # 如果问答对序号不一致才加入最佳答案
+                if qa_id not in best_id:
+                    best_point.insert(0, point)
+                    best_id.insert(0, qa_id)
+                    best_extend.insert(0, dict_extend.get(qa_ex_id))
+                    # print("Best qa_ex_id, point, max, match, unmatch", qa_ex_id, point, max, match, unmatch)
+    best_point.pop(-1)
+    print('Best ID, point, Extend:', best_id, best_point, best_extend)
+    return best_id, best_point, best_extend
 
 
 dict_keyword, dict_synonym, dict_extend = load_dataframe()  # 预加载字典文件，关键词、局部同义词、扩展问
@@ -215,13 +202,13 @@ def qa():
     if request.method == 'POST':
         question = request.form.get('question')  # 从页面读取问句
         dict_seg = {}
-        fmm1 = fmmcut(question, dict_keyword, dict_synonym)  # 问句分词
+        fmm1 = fmm_cut(question, dict_keyword, dict_synonym)  # 问句分词
         for word in fmm1:
             if '@' in word:
                 word, importance = word.strip().split(',')
                 _, word = word.strip().split('@')
                 dict_seg[word] = float(importance)
-        best_id, best_point, best_extend = CountPoint(dict_seg)  # 问句分词后计算分值，返回最优
+        best_id, best_point, best_extend = count_point(dict_seg)  # 问句分词后计算分值，返回最优
         best_questions, best_answers, branch = get_qa(best_id)  # 提取问答对
         # 问答记录至log文件中，事后分析
         app.logger.info("Question: %s", question)  # 问句记录至log文件中
@@ -230,6 +217,9 @@ def qa():
         app.logger.info("Best Question: %s", best_questions)
         app.logger.info("Best Answer: %s", best_answers)
         # 输出至页面
-        return render_template('qa.html', qa = True, question = question, seg = dict_seg, ids = best_id, points = best_point, extend = best_extend, questions = best_questions, answers = best_answers, )
+        return render_template('qa.html',
+                               qa=True, question=question, seg=dict_seg,
+                               ids=best_id, points=best_point, extend=best_extend,
+                               questions=best_questions, answers=best_answers, )
     # 显示页面QA，输入问句
     return render_template('qa.html',)
