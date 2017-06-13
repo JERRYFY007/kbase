@@ -3,12 +3,13 @@
 # @file:qa.py
 # @time:2017/6/8
 #
-#  知识库局部同义词的处理
+
 from lxml import etree
 
 from .segment import *
 
 
+# 预加载字典文件
 def load_dataframe():
     # 读取并生成关键词和全局同义词字典
     print("Building keywords dictionary...")
@@ -151,27 +152,22 @@ def get_qa(items):
 * 4、总得分 = (匹配分-不匹配分)/最高匹配分
 """
 def CountPoint(dict_seg):
-    print(dict_seg)
-    seg_max = 0.0
-    for seg in dict_seg.keys():
-        seg_max += float(dict_seg.get(seg))
-    # print("Question Max Point:", seg_max)
+    best_id, best, best_extend = [''], [0.0], ['']
+
     with open("app/dict/extend.dict", encoding='utf8') as f:  # 可事先加载问扩展问字典，不用每次都读文件
-        best_id, best, best_extend = [''], [0.0], ['']
         for line in f:
             (qa_ex_id, extends) = line.strip().split(',')
-            point, max, match, unmatch = 0.0, 0.0, 0.0, 0.0
-            seg_point, extend_point = 0.0, 0.0
             extends = extends.strip().split(';')
             extends.pop(-1)
 
+            point, max, match, unmatch = 0.0, 0.0, 0.0, 0.0
+ 
             # 计算扩展问的最大分，可事先计算好生成字典文件
             for extend in extends:
                 max += float(dict_keyword.get(extend.strip().split('|')[0]))
                 # print(qa_ex_id, extend.strip().split('|')[0], dict_keyword.get(extend.strip().split('|')[0]), max)
 
             for seg in dict_seg.keys():
-                seg_point = float(dict_keyword.get(seg))
                 sucess = False
                 for extend in extends:
                     items = extend.strip().split('|')
@@ -181,8 +177,9 @@ def CountPoint(dict_seg):
                         # print("Matched:", qa_ex_id, list_seg, seg, seg_point, match)
                         break
                 if sucess == False:
-                    unmatch += seg_point * 0.3
+                    unmatch += float(dict_keyword.get(seg)) * 0.3
                     # print("Unmatched:",qa_ex_id, seg, seg_point, unmatch)
+
             # print("qa_ex_id, match, unmatch, max:", qa_ex_id, match, unmatch, max)
             # 计算扩展问的总分point，确定是否最佳
             if max == 0 or match == 0 or match < unmatch:  # max=0代表空白扩展问；match=0代表全部不匹配；match < unmatch 代表不匹配度太高 
@@ -191,6 +188,7 @@ def CountPoint(dict_seg):
                 # 计算总分
                 point = (match - unmatch) / max
                 # print("qa_ex_id, point, max, match, unmatch", qa_ex_id, point, max, match, unmatch)
+
                 if point > 0.55:
                     print("Best qa_ex_id, point, max, match, unmatch", qa_ex_id, point, max, match, unmatch)
                     # 与当前最佳分比较
