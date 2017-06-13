@@ -1,14 +1,61 @@
 # -*- coding:utf-8 -*-
 # @author:Eric Luo
-# @file:dialog.py
-# @time:2017/4/10 0010 16:04
-from flask import render_template, request
-from app import *
-from .segment import *
+# @file:qa.py
+# @time:2017/6/8
+#
+
 from lxml import etree
 
+from .segment import *
 
-def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
+
+# 预加载字典文件
+def load_dataframe():
+    # 读取并生成关键词和全局同义词字典
+    print("Building keywords dictionary...")
+    dict_keyword = {}
+    with open("app/dict/keyword.dict", encoding='utf8') as f:
+        for line in f:
+            (val, imp) = line.strip().split(',')
+            dict_keyword[val] = imp
+    print("Dict Keyword:", len(dict_keyword))
+
+    # 读取并生成局部同义词字典
+    print("Building local synonym dictionary...")
+    dict_synonym = {}
+    with open("app/dict/extend.dict", encoding='utf8') as f:
+        for line in f:
+            word, item = line.strip().lower().split(',')
+            if item != 'Item':
+                dict_synonym[word] = item
+    print("Dict local synonym: %d" % (len(dict_synonym)))
+
+    # 读取并生成问答扩展问字典
+    print("Building extends dictionary...")
+    dict_extend = {}
+    with open("app/dict/extend.dict", encoding='utf8') as f:
+        for line in f:
+            dict_item = {}
+            (qa_ex_id, item) = line.strip().split(',')
+            if item == "Item":
+                continue
+            # print(qa_ex_id, item)
+            items = item.split(';')
+            items.pop(-1)
+            # print(items)
+            sy = []
+            for keyword in items:
+                # print(keyword)
+                sy.append(keyword.split('|'))
+                dict_item[keyword] = sy
+            # print("Extend:", sy)
+            dict_extend[qa_ex_id] = sy
+    print("Dict extend: ", len(dict_extend))
+    return dict_keyword, dict_synonym, dict_extend
+
+
+# 问句分词，最大匹配算法，缺省正相匹配
+def fmmcut(sentence, dict_kw, dict_local_sy, FMM=True):
     result_s = []
     sentence = sentence.lower()
     s_length = len(sentence)
@@ -17,16 +64,19 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
             word = sentence
             w_length = len(word)
             while w_length > 0:
-                if word in wordsdict1:
-                    synonym = wordsdict1.get(word)
-                    result_s.append("@" + synonym + "," + str(wordsdict2.get(synonym)))
+                # 关键词及全局同义词切分
+                if word in dict_kw:
+                    result_s.append("@" + word + "," + str(dict_kw.get(word)))
                     sentence = sentence[w_length:]
                     break
-                elif word in wordsdict2:
-                    result_s.append("@" + word + "," + str(wordsdict2.get(word)))
+                # 局部同义词切分
+                elif word in dict_local_sy:
+                    print("Find a local synonym word: ", word)
+                    result_s.append("#" + word + "," + dict_local_sy.get(word))
                     sentence = sentence[w_length:]
                     break
-                elif word in wordsdict3 or w_length == 1:
+                # 切分至单字
+                elif w_length == 1:
                     result_s.append(word)
                     sentence = sentence[w_length:]
                     break
@@ -34,21 +84,16 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
                     word = word[:w_length - 1]
                 w_length = w_length - 1
             s_length = len(sentence)
-    else:
+    else:  # 反向最大匹配，暂不使用
         while s_length > 0:
             word = sentence
             w_length = len(word)
             while w_length > 0:
-                if word in wordsdict1:
-                    synonym = wordsdict1.get(word)
-                    result_s.insert(0, ("@" + synonym + "," + str(wordsdict2.get(synonym))))
+                if word in dict_kw:
+                    result_s.insert(0, ("@" + word + "," + str(dict_kw.get(word))))
                     sentence = sentence[:s_length - w_length]
                     break
-                elif word in wordsdict2:
-                    result_s.insert(0, ("@" + word + "," + str(wordsdict2.get(word))))
-                    sentence = sentence[:s_length - w_length]
-                    break
-                elif word in wordsdict2 or w_length == 1:
+                elif word in dict_local_sy or w_length == 1:
                     result_s.insert(0, word)
                     sentence = sentence[:s_length - w_length]
                     break
@@ -59,143 +104,135 @@ def fmmcut(sentence, wordsdict1, wordsdict2, wordsdict3, FMM=True):
     return result_s
 
 
-def load_keyword_dict(xml_filename):
-    print("Building Keyword & Synonym dictionary...")
-    root = etree.parse(xml_filename).getroot()
-    keyword_no, synonym_no = 0, 0
-    importance = 0.0
-    dict_keyword, dict_synonym = {}, {}
-    for keyword in root:
-        row_data = []
-        for item in keyword:
-            row_data.append(item.text.strip())
-        while len(row_data) >= 3:
-            synonym_no += 1
-            value = row_data[0].lower()
-            synonym = row_data[-1].lower()
-            importance = float(row_data[1])
-            dict_keyword[value] = importance
-            dict_synonym[synonym] = value
-            row_data.pop(-1)
-        if len(row_data) == 2:
-            keyword_no += 1
-            value = row_data[0].lower()
-            importance = float(row_data[1])
-            dict_keyword[value] = importance
-    print('Process Keyword: ', keyword_no)
-    print('Process Synonym: ', synonym_no)
-    print('Process Keyword Dict: ', len(dict_keyword))
-    print('Process Synonym Dict: ', len(dict_synonym))
-    print("The volumn of Keyword & Synonym dictionary:", len(dict_keyword), len(dict_synonym))
-    return dict_keyword, dict_synonym
-
-
-def load_extend_dict(xml_filename):
-    print("Building Extend & Knownledge dictionary...")
-    root = etree.parse(xml_filename).getroot()
-    qa_id, ex_no = 0, 0
-    dict_question, dict_answer = {}, {}
-    dict_extend, dict_extend_item, dict_extend_point = {}, {}, {}
+# 加载问答对
+def load_qa(xml_filename):
+    print("Building Question, Answer, Branch Dict...")
+    # Process knowledge.xml
+    tree = etree.parse(xml_filename)
+    root = tree.getroot()
+    dict_question, dict_answer, dict_branch = {}, {}, {}
+    qa_id = 0
     for knowledge in root:
         qa_id = qa_id + 1
-        qa_data = []
-        ex_id = 0
+        br_id = 0
         for field in knowledge:
-            if field.text is None:
-                ex_id = ex_id + 1
-                extend_item = []
-                qa_ex = str(qa_id) + ':' + str(ex_id)
-                for item in field:
-                    dict_extend_point[qa_ex] = 0.0
-                    row_data = []
-                    for keyword in item:
-                        row_data.append(keyword.text.strip())
-                        extend_item.append(keyword.text.strip())
-                    while len(row_data) >= 3:
-                        extend = row_data[-1].lower()
-                        extend_item.append(extend)
-                        if extend in dict_extend:
-                            temp = dict_extend.get(extend)
-                            temp.append(qa_ex)
-                            dict_extend[extend] = temp
-                        else:
-                            temp = []
-                            temp.append(qa_ex)
-                            dict_extend[extend] = temp
-                        row_data.pop(-1)
-                    if len(row_data) == 2:
-                        extend = row_data[0].lower()
-                        if extend in dict_extend:
-                            temp = dict_extend.get(extend)
-                            temp.append(qa_ex)
-                            dict_extend[extend] = temp
-                        else:
-                            temp = []
-                            temp.append(qa_ex)
-                            dict_extend[extend] = temp
-                if extend_item:
-                    dict_extend_item[qa_ex] = extend_item
+            if field.tag == "question":
+                dict_question[qa_id] = field.text
+            if field.tag == "answer":
+                dict_answer[qa_id] = field.text
+            if field.tag == "branch":
+                br_id += 1
+                dict_branch[str(qa_id) + ':' + str(br_id)] = field.text
+    print("The volumn of Question, Answer, Branch Dict:", len(dict_question), len(dict_answer), len(dict_branch))
+    return dict_question, dict_answer, dict_branch
+
+
+def get_qa(items):
+    question, answer, branch = [], [], []
+    if len(items) > 4:
+        max5 = 4
+    else:
+        max5 = len(items)
+    for j in range(max5):
+        qa_id = items[j]
+        if int(qa_id) in dict_question:
+            # print("Find question & answer!")
+            question.append(dict_question.get(int(qa_id)))
+            answer.append(dict_answer.get(int(qa_id)))
+            branch.append(dict_branch.get(qa_id))
+    return question, answer, branch
+
+
+"""
+计算问句分值
+* 算法说明：逐个比较keyword[]与extend.get(i)
+* 1、计算该extend的最高匹配分：将其所有item根据重要性和是否可省略评分，再相加得到最高匹配分（满分）
+* 2、计算keyword[]与extend的重合关键词，将重合关键词的分数相加，得到匹配分。
+* 3、计算keyword[]中与extend不重合的关键词，将不重合关键词的分数相加，乘以系数，得到不匹配分
+* 4、总得分 = (匹配分-不匹配分)/最高匹配分
+"""
+
+
+def CountPoint(dict_seg):
+    best_id, best, best_extend = [''], [0.0], ['']
+
+    with open("app/dict/extend.dict", encoding='utf8') as f:  # 可事先加载问扩展问字典，不用每次都读文件
+        for line in f:
+            (qa_ex_id, extends) = line.strip().split(',')
+            extends = extends.strip().split(';')
+            extends.pop(-1)
+
+            point, max, match, unmatch = 0.0, 0.0, 0.0, 0.0
+
+            # 计算扩展问的最大分，可事先计算好生成字典文件
+            for extend in extends:
+                max += float(dict_keyword.get(extend.strip().split('|')[0]))
+                # print(qa_ex_id, extend.strip().split('|')[0], dict_keyword.get(extend.strip().split('|')[0]), max)
+
+            for seg in dict_seg.keys():
+                sucess = False
+                for extend in extends:
+                    items = extend.strip().split('|')
+                    if seg in items:
+                        match += float(dict_keyword.get(items[0]))
+                        sucess = True
+                        # print("Matched:", qa_ex_id, list_seg, seg, seg_point, match)
+                        break
+                if sucess == False:
+                    unmatch += float(dict_keyword.get(seg)) * 0.3
+                    # print("Unmatched:",qa_ex_id, seg, seg_point, unmatch)
+
+            # print("qa_ex_id, match, unmatch, max:", qa_ex_id, match, unmatch, max)
+            # 计算扩展问的总分point，确定是否最佳
+            if max == 0 or match == 0 or match < unmatch:  # max=0代表空白扩展问；match=0代表全部不匹配；match < unmatch 代表不匹配度太高
+                continue
             else:
-                qa_data.append(field.text.strip())
-        ex_no += ex_id
-        dict_question[qa_id] = qa_data[0]
-        dict_answer[qa_id] = qa_data[1]
-    print("Process Extend Dict: ", len(dict_extend))
-    print("Process QA: ", qa_id)
-    print("Process Extend: ", ex_no)
-    print("The volumn of Extend & Knownledge dictionary:", len(dict_extend), len(dict_extend_point), len(dict_extend_item), len(dict_answer))
-    return dict_extend, dict_extend_point, dict_extend_item, dict_answer
+                # 计算总分
+                point = (match - unmatch) / max
+                # print("qa_ex_id, point, max, match, unmatch", qa_ex_id, point, max, match, unmatch)
+
+                if point > 0.55:
+                    print("Best qa_ex_id, point, max, match, unmatch", qa_ex_id, point, max, match, unmatch)
+                    # 与当前最佳分比较
+                    if point >= best[0]:
+                        (qa_id, _) = qa_ex_id.split(':')  # 只保留问答对序号，丢弃扩展问序号
+                        # 如果问答对序号不一致才加入最佳答案
+                        if qa_id not in best_id:
+                            best.insert(0, point)
+                            best_id.insert(0, qa_id)
+                            best_extend.insert(0, extends)
+        best.pop(-1)
+        best_id.pop(-1)
+        print('Best ID & point:', best_id, best)
+    return best_id, best, best_extend
 
 
-def countPoint(items):
-    best, max, match, unmatch = 0.0, 0.0, 0.0, 0.0   # 最佳分，最高分，匹配分，不匹配分
-    point = 0.0   # 当前分
-    for i in dict_extend_item:
-        for item in dict_extend_item.get(i):
-            if item in items:
-                match += dict_keyword.get(item)
-                dict_extend_point[i] += dict_keyword.get(item)
-            elif item in dict_keyword:
-                unmatch -= dict_keyword.get(item)
-                dict_extend_point[i] -= dict_keyword.get(item)
-        if dict_extend_point[i] > 0:
-            print(dict_extend_point[i], dict_extend_item[i])
-
-    for item in items:
-        if item in dict_extend:
-            for qa_ex in dict_extend.get(item):
-                p = dict_keyword.get(item)
-                dict_extend_point[qa_ex] = dict_extend_point.get(qa_ex) + dict_keyword.get(item)
-    for i in dict_extend_point:
-        if dict_extend_point.get(i) > max:
-            max = dict_extend_point.get(i)
-            # print(i, dict_extend_point.get(i))
-    return
-
-dict_extend, dict_extend_point, dict_extend_item, dict_answer = load_extend_dict("app/dict/knowledge.xml")
-dict_keyword, dict_synonym = load_keyword_dict("app/dict/keyword.xml")
+dict_keyword, dict_synonym, dict_extend = load_dataframe()  # 预加载字典文件，关键词、局部同义词、扩展问
+dict_question, dict_answer, dict_branch = load_qa("app/dict/knowledge.xml")  # 预加载问答知识库问答对文件，及扩展问
 
 
 @app.route('/dialog', methods=['GET', 'POST'])
 @app.route('/dialog/', methods=['GET', 'POST'])
 def dialog():
     if request.method == 'POST':
-        question = request.form.get('question')
-        answer = []
-        items = []
-        point = 0.0
-
-        fmm1 = fmmcut(question, wordsdict1, wordsdict2, wordsdict3)
-        print(fmm1)
-        answer.append(fmm1)
+        question = request.form.get('question')  # 从页面读取问句
+        dict_seg = {}
+        fmm1 = fmmcut(question, dict_keyword, dict_synonym)  # 问句分词
         for word in fmm1:
             if '@' in word:
                 word, importance = word.strip().split(',')
                 _, word = word.strip().split('@')
-                print(word, importance)
-                answer.append(word + ' ' + importance)
-                items.append(word)
-        point = countPoint(items)
-        # print(point)
-        return render_template('dialog.html', dialog = True, question = question, answers = answer, )
-    return render_template('dialog.html',)
+                dict_seg[word] = float(importance)
+        best_id, best_point, best_extend = CountPoint(dict_seg)  # 问句分词后计算分值，返回最优
+        best_questions, best_answers, branch = get_qa(best_id)  # 提取问答对
+        # 问答记录至log文件中，事后分析
+        app.logger.info("Question: %s", question)  # 问句记录至log文件中
+        app.logger.info("Question Segmation: %s", fmm1)  # 问句分词后记录至log文件中
+        app.logger.info("Best id & point: %s %s", best_id, best_point)
+        app.logger.info("Best Question: %s", best_questions)
+        app.logger.info("Best Answer: %s", best_answers)
+        # 输出至页面
+        return render_template('qa.html', qa=True, question=question, seg=dict_seg, ids=best_id, points=best_point,
+                               extend=best_extend, questions=best_questions, answers=best_answers, )
+    # 显示页面QA，输入问句
+    return render_template('qa.html', )
