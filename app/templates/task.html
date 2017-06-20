@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block body %}
+<br>
+<form class="form-horizontal" action="{{ url_for('task') }}" method="post">
+    <div class="form-group">
+        <label for="question" class="col-md-2 control-label">输入问题:</label>
+        <div class="col-md-5">
+            <input type="text" class="form-control" id="question" placeholder="question" name="question">
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-info">输入</button>
+        </div>
+    </div>
+</form>
+
+{% if task %}
+	<dl class="dl-horizontal col-md-8 col-md-offset-0">
+		<dt> 用户问题： </dt>
+		<dd> {{ question }} </dd>
+		<dt> 问题分词： </dt>
+		<dd> {{ seg }} </dd>
+		<br>
+		{% for n in range(4) %}
+			{% if ids[n] %}
+			<dt> ID: </dt>
+			<dd> {{ ids[n] }} </dd>
+			<dt> Extend: </dt>
+			<dd> {{ extend[n] }} </dd>
+			<dt> Point: </dt>
+			<dd> {{ points[n] }} </dd>
+			<dt> Question: </dt>
+			<dd> {{ questions[n] }} </dd>
+			<dt> Answer: </dt>
+			<dd> {{ answers[n] }} </dd>
+			<br>
+			{% endif %}
+		{% endfor %}
+    </dl>
+{% endif %}
+{% endblock %}
+
+{% block js %}
+{% if active_url %}
+$('#{{ active_url }}').addClass('active');
+{% else %}
+$('#task-url').addClass('active');
+{% endif %}
+{% endblock %}
+
