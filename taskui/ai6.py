@@ -7,7 +7,7 @@ import requests
 # Make the same request we did earlier, but with the coordinates of San Francisco instead.
 parameters = {"input": '{in:广州今天的天气怎样？}'}
 parameters = {"input": '{in:天气如何？}'}
-parameters = {"input": '{in:上个月电费？}'}
+parameters = {'input': '上个月电费？'}
 response = requests.get("http://39.108.135.114:8001/simpleMobile/getConversation.sc?", params=parameters)
 
 print(response)
