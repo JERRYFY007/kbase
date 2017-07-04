@@ -13,22 +13,23 @@ def hello():
 
 @app.route("/ask", methods=['POST'])
 def ask():
-    parameters = {}
-    test = ''
+    text = {}
     with open('taskui-data.pickle', 'rb') as handle:
-        parameters = pickle.load(handle)
+        text = pickle.load(handle)
     message = str(request.form['messageText'])
-    text = str('{"input":"' + message + '"}')
-    parameters["input"] = text
-    print(parameters)
+    text['input'] = str(message)
+    parameters = "input=" + str(text)
+    print("Parameters", parameters)
     while True:
         if message == "quit":
+            print("Quit!")
             exit()
         elif message == "save":
-            print("bot_brain.brn")
+            print("save")
         else:
             response = requests.get("http://39.108.135.114:8001/simpleMobile/getConversation.sc?", params=parameters)
             data = response.json()
+            print("Recive:", data)
             with open('taskui-data.pickle', 'wb') as handle:
                 pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
             return jsonify({'status': 'OK', 'answer': data['responce']['show']})
