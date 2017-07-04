@@ -1,0 +1,128 @@
+{
+  "id": "",
+  "input": "天气",
+  "realProperty": {
+    "realproperty": {
+      "realparam": [
+        {
+          "value": "",
+          "name": "请问要查哪个城市的天气",
+          "nameEntity": {
+            "name": "城市名",
+            "special": false,
+            "including": []
+          },
+          "length_max": 99,
+          "length_min": 1,
+          "type": "String"
+        },
+        {
+          "value": "2017年6月1日 0时0分0秒",
+          "name": "请问要查哪天的天气",
+          "nameEntity": {
+            "name": "时间",
+            "special": true,
+            "including": []
+          },
+          "length_max": 99,
+          "length_min": 1,
+          "type": "String",
+          "value_default": "今天"
+        }
+      ],
+      "name": "信息",
+      "ask": "查询气温",
+      "resultID": "通用_天气",
+      "isDefault": true,
+      "property": [],
+      "param": [
+        {
+          "name": "请问要查哪个城市的天气",
+          "nameEntity": {
+            "name": "城市名",
+            "special": false,
+            "including": [
+            ]
+          },
+          "length_max": 99,
+          "length_min": 1,
+          "type": "String"
+        },
+        {
+          "name": "请问要查哪天的天气",
+          "nameEntity": {
+            "name": "时间",
+            "special": true,
+            "including": []
+          },
+          "length_max": 99,
+          "length_min": 1,
+          "type": "String",
+          "value_default": "今天"
+        }
+      ],
+      "similarity": [],
+      "synonym_part": []
+    },
+    "realparam": [],
+    "name": "天气",
+    "isDefault": false,
+    "property": [
+      {
+        "name": "信息",
+        "ask": "查询气温",
+        "resultID": "通用_天气",
+        "isDefault": true,
+        "property": [],
+        "param": [
+          {
+            "name": "请问要查哪个城市的天气",
+            "nameEntity": {
+              "name": "城市名",
+              "special": false,
+              "including": []
+            },
+            "length_max": 99,
+            "length_min": 1,
+            "type": "String"
+          },
+          {
+            "name": "请问要查哪天的天气",
+            "nameEntity": {
+              "name": "时间",
+              "special": true,
+              "including": []
+            },
+            "length_max": 99,
+            "length_min": 1,
+            "type": "String",
+            "value_default": "今天"
+          }
+        ],
+        "similarity": [],
+        "synonym_part": []
+      }
+    ],
+    "param": [],
+    "similarity": [],
+    "synonym_part": []
+  },
+  "askingParam": {
+    "value": "",
+    "name": "请问要查哪个城市的天气",
+    "nameEntity": {
+      "name": "城市名",
+      "special": false,
+      "including": []
+    },
+    "length_max": 99,
+    "length_min": 1,
+    "type": "String"
+  },
+  "responce": {
+    "speak": "请问要查哪个城市的天气",
+    "show": "请问要查哪个城市的天气",
+    "eventid": "",
+    "var": []
+  }
+}
