@@ -1,4 +1,5 @@
 import pickle
+import time
 
 import requests
 from flask import Flask, render_template, request, jsonify
@@ -13,6 +14,8 @@ def hello():
 
 @app.route("/ask", methods=['POST'])
 def ask():
+    localtime = time.localtime(time.time())
+    print(localtime)
     text = {}
     with open('taskui-data.pickle', 'rb') as handle:
         text = pickle.load(handle)
