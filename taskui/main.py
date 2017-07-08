@@ -30,7 +30,7 @@ def ask():
         elif message == "save":
             print("save")
         else:
-            response = requests.get("http://39.108.135.114:8001/simpleMobile/getConversation.sc?", params=parameters)
+            response = requests.get("http://39.108.135.114:8001/ZRobot/getConversation?", params=parameters)
             data = response.json()
             print("Recive:", data)
             with open('taskui-data.pickle', 'wb') as handle:
